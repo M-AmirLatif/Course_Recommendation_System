@@ -46,6 +46,66 @@ const findSimilarStudents = (currentStudent, allStudents) => {
   return similarStudents
 }
 
+// ─────────────────────────────────────────
+// PREDICTIVE MODELING
+// Estimates success probability for a course
+// based on student's historical performance
+// ─────────────────────────────────────────
+const predictSuccessProbability = (student, course, grades) => {
+  let probability = 50 // base 50%
+
+  // Factor 1: CGPA impact
+  if (student.cgpa >= 3.5) probability += 20
+  else if (student.cgpa >= 3.0) probability += 15
+  else if (student.cgpa >= 2.5) probability += 10
+  else if (student.cgpa >= 2.0) probability += 5
+  else probability -= 10
+
+  // Factor 2: Skill level vs difficulty match
+  if (course.difficultyLevel === student.skillLevel) {
+    probability += 15
+  } else if (
+    (student.skillLevel === 'advanced' &&
+      course.difficultyLevel === 'intermediate') ||
+    (student.skillLevel === 'intermediate' &&
+      course.difficultyLevel === 'beginner')
+  ) {
+    probability += 20 // easier than skill level = high chance
+  } else if (
+    student.skillLevel === 'beginner' &&
+    course.difficultyLevel === 'advanced'
+  ) {
+    probability -= 20 // too hard
+  }
+
+  // Factor 3: Past performance in similar courses
+  if (grades && grades.length > 0) {
+    const similarGrades = grades.filter((g) => {
+      const courseTags = g.course.tags || []
+      return courseTags.some((tag) => course.tags.includes(tag))
+    })
+
+    if (similarGrades.length > 0) {
+      const avgGradePoints =
+        similarGrades.reduce((sum, g) => sum + g.gradePoints, 0) /
+        similarGrades.length
+
+      if (avgGradePoints >= 3.5) probability += 15
+      else if (avgGradePoints >= 3.0) probability += 10
+      else if (avgGradePoints >= 2.0) probability += 5
+      else probability -= 10
+    }
+  }
+
+  // Factor 4: Course success rate
+  if (course.successRate >= 85) probability += 10
+  else if (course.successRate >= 70) probability += 5
+  else probability -= 5
+
+  // Clamp between 10% and 99%
+  return Math.min(99, Math.max(10, Math.round(probability)))
+}
+
 const recommendCourses = (
   student,
   courses,
@@ -233,7 +293,12 @@ const recommendCourses = (
       score = -1
     }
 
-    return { course, score, reasons }
+    const successProbability = predictSuccessProbability(
+      student,
+      course,
+      grades,
+    )
+    return { course, score, reasons, successProbability }
   })
 
   // Filter and sort

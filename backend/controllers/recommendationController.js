@@ -52,6 +52,7 @@ const getRecommendations = async (req, res) => {
         successRate: item.course.successRate,
         rating: item.course.averageRating,
         score: item.score,
+        successProbability: item.successProbability,
         whyRecommended: item.reasons,
       })),
     })
