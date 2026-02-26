@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recommendations — Course Recommender</title>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <div class="navbar">
+      <span class="logo">🎓 Course Recommender</span>
+      <div>
+        <span id="navName" style="margin-right: 15px; font-size: 14px"></span>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="dashboard">
+      <h1>🤖 AI Course Recommendations</h1>
+      <p class="subtitle" id="subtitleMsg">Analyzing your profile...</p>
+
+      <!-- STUDENT SUMMARY -->
+      <div
+        style="
+          background: white;
+          padding: 20px 25px;
+          border-radius: 12px;
+          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+          margin-bottom: 25px;
+          display: flex;
+          gap: 30px;
+          flex-wrap: wrap;
+          align-items: center;
+        "
+      >
+        <div>
+          <p style="color: #888; font-size: 12px">Career Goal</p>
+          <p style="font-weight: 700; color: #1a1a2e" id="careerGoal">—</p>
+        </div>
+        <div>
+          <p style="color: #888; font-size: 12px">Interests</p>
+          <div id="interestTags"></div>
+        </div>
+        <div>
+          <p style="color: #888; font-size: 12px">Courses Analyzed</p>
+          <p style="font-weight: 700; color: #e94560" id="totalAnalyzed">—</p>
+        </div>
+      </div>
+
+      <!-- RECOMMENDATIONS LIST -->
+      <div id="recommendationsList">
+        <p style="color: #888; text-align: center; padding: 40px">
+          Loading recommendations...
+        </p>
+      </div>
+    </div>
+
+    <script>
+      const API = 'http://localhost:5000/api'
+      const token = localStorage.getItem('token')
+
+      if (!token) {
+        window.location.href = 'login.html'
+      }
+
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      }
+
+      document.getElementById('navName').textContent =
+        localStorage.getItem('studentName')
+
+      window.onload = async () => {
+        await loadRecommendations()
+      }
+
+      async function loadRecommendations() {
+        document.getElementById('recommendationsList').innerHTML = `
+          <div style="text-align:center; padding:60px;">
+            <div style="font-size:50px;">🤖</div>
+            <p style="color:#888; margin-top:15px; font-size:16px;">
+              AI is analyzing your profile...
+            </p>
+          </div>
+        `
+        try {
+          const res = await fetch(`${API}/recommendations`, { headers })
+          const data = await res.json()
+
+          // Fill student summary
+          document.getElementById('subtitleMsg').textContent =
+            `Personalized recommendations for ${data.student}`
+          document.getElementById('careerGoal').textContent = data.careerGoal
+          document.getElementById('totalAnalyzed').textContent =
+            `${data.totalCoursesAnalyzed} courses`
+
+          // Render interest tags
+          const tagsDiv = document.getElementById('interestTags')
+          data.interests.forEach((interest) => {
+            tagsDiv.innerHTML += `<span class="reason-tag">${interest}</span>`
+          })
+
+          // Render recommendation cards
+          const list = document.getElementById('recommendationsList')
+
+          if (data.recommendations.length === 0) {
+            list.innerHTML = `
+            <div style="text-align:center; padding:40px; background:white;
+                        border-radius:12px;">
+              <p style="font-size:40px;">🎓</p>
+              <p style="color:#888; margin-top:10px;">
+                No recommendations available. 
+                Update your profile with interests and career goals!
+              </p>
+            </div>`
+            return
+          }
+
+          list.innerHTML = ''
+          data.recommendations.forEach((rec) => {
+            // Rank medal
+            const medal =
+              rec.rank === 1
+                ? '🥇'
+                : rec.rank === 2
+                  ? '🥈'
+                  : rec.rank === 3
+                    ? '🥉'
+                    : rec.rank === 4
+                      ? '4️⃣'
+                      : '5️⃣'
+
+            // Difficulty color
+            const diffColor =
+              rec.difficulty === 'beginner'
+                ? '#27ae60'
+                : rec.difficulty === 'intermediate'
+                  ? '#f39c12'
+                  : '#e74c3c'
+
+            // Build reasons tags
+            const reasonTags = rec.whyRecommended
+              .map((reason) => `<span class="reason-tag">✓ ${reason}</span>`)
+              .join('')
+
+            list.innerHTML += `
+            <div class="rec-card">
+                <div class="rank">${medal}</div>
+                <div class="course-info" style="flex:1;">
+                <h3>${rec.title}</h3>
+                <p>
+                    <strong>${rec.courseCode}</strong> &nbsp;•&nbsp;
+                    <span style="color:${diffColor}; font-weight:600;">
+                    ${rec.difficulty}
+                    </span> &nbsp;•&nbsp;
+                    ⭐ ${rec.rating}/5 &nbsp;•&nbsp;
+                    📈 ${rec.successRate}% success rate
+                </p>
+                <div class="reasons" style="margin-top:10px;">
+                    ${reasonTags}
+                </div>
+                </div>
+                <div style="text-align:center; display:flex; flex-direction:column; gap:8px;">
+                <div class="score-badge">Score: ${rec.score}</div>
+                <button onclick="enrollCourse('${rec.courseCode}')"
+                    style="background:#1a1a2e; color:white; border:none; 
+                        padding:8px 16px; border-radius:8px;
+                        cursor:pointer; font-size:13px;">
+                    + Enroll
+                </button>
+                <div style="display:flex; gap:5px; justify-content:center;">
+                    <button onclick="sendFeedback('${rec.courseCode}', 'like')"
+                    style="background:#27ae60; color:white; border:none;
+                            padding:6px 12px; border-radius:8px;
+                            cursor:pointer; font-size:13px; flex:1;"
+                    id="like-${rec.courseCode}">
+                    👍 Like
+                    </button>
+                    <button onclick="sendFeedback('${rec.courseCode}', 'dislike')"
+                    style="background:#e74c3c; color:white; border:none;
+                            padding:6px 12px; border-radius:8px;
+                            cursor:pointer; font-size:13px; flex:1;"
+                    id="dislike-${rec.courseCode}">
+                    👎 Dislike
+                    </button>
+                </div>
+                </div>
+            </div>
+            `
+          })
+        } catch (error) {
+          document.getElementById('recommendationsList').innerHTML =
+            '<p style="color:red; text-align:center;">Error loading recommendations. Make sure backend is running.</p>'
+        }
+      }
+
+      async function enrollCourse(courseCode) {
+        // Get course ID from course code
+        const coursesRes = await fetch(`${API}/courses`, { headers })
+        const courses = await coursesRes.json()
+        const course = courses.find((c) => c.courseCode === courseCode)
+
+        if (!course) return alert('Course not found!')
+
+        const res = await fetch(`${API}/enrollments`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            courseId: course._id,
+            semester: 5,
+            academicYear: '2025-2026',
+          }),
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          alert(`✅ Successfully enrolled in ${course.title}!`)
+          loadRecommendations() // reload to update list
+        } else {
+          alert(data.message)
+        }
+      }
+
+      async function sendFeedback(courseCode, type) {
+        // Get course ID
+        const coursesRes = await fetch(`${API}/courses`, { headers })
+        const courses = await coursesRes.json()
+        const course = courses.find((c) => c.courseCode === courseCode)
+
+        if (!course) return
+
+        // Check if preferences exist
+        const prefRes = await fetch(`${API}/preferences`, { headers })
+
+        let res
+        if (prefRes.ok) {
+          // Preferences exist → update them
+          const pref = await prefRes.json()
+
+          let likedCourses = pref.likedCourses || []
+          let dislikedCourses = pref.dislikedCourses || []
+
+          if (type === 'like') {
+            // Add to liked, remove from disliked
+            if (!likedCourses.includes(course._id)) {
+              likedCourses.push(course._id)
+            }
+            dislikedCourses = dislikedCourses.filter((id) => id !== course._id)
+          } else {
+            // Add to disliked, remove from liked
+            if (!dislikedCourses.includes(course._id)) {
+              dislikedCourses.push(course._id)
+            }
+            likedCourses = likedCourses.filter((id) => id !== course._id)
+          }
+
+          res = await fetch(`${API}/preferences`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify({ likedCourses, dislikedCourses }),
+          })
+        } else {
+          // No preferences → create them
+          res = await fetch(`${API}/preferences`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              likedCourses: type === 'like' ? [course._id] : [],
+              dislikedCourses: type === 'dislike' ? [course._id] : [],
+            }),
+          })
+        }
+
+        if (res.ok) {
+          // Visual feedback
+          const likeBtn = document.getElementById(`like-${courseCode}`)
+          const dislikeBtn = document.getElementById(`dislike-${courseCode}`)
+
+          if (type === 'like') {
+            likeBtn.style.background = '#1e8449'
+            likeBtn.textContent = '👍 Liked!'
+            dislikeBtn.style.background = '#e74c3c'
+            dislikeBtn.textContent = '👎 Dislike'
+          } else {
+            dislikeBtn.style.background = '#922b21'
+            dislikeBtn.textContent = '👎 Disliked!'
+            likeBtn.style.background = '#27ae60'
+            likeBtn.textContent = '👍 Like'
+          }
+
+          // Reload recommendations after 1 second to reflect changes
+          setTimeout(() => {
+            loadRecommendations()
+          }, 1000)
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem('token')
+        localStorage.removeItem('studentName')
+        localStorage.removeItem('studentId')
+        window.location.href = 'login.html'
+      }
+    </script>
+  </body>
+</html>

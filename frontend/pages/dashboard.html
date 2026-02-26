@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — Course Recommender</title>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <div class="navbar">
+      <span class="logo">🎓 Course Recommender</span>
+      <div>
+        <span id="navName" style="margin-right: 15px; font-size: 14px"></span>
+        <a href="recommendations.html">Get Recommendations</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </div>
+
+    <!-- DASHBOARD CONTENT -->
+    <div class="dashboard">
+      <h1 id="welcomeMsg">Welcome back!</h1>
+      <p class="subtitle">Here's your academic overview</p>
+
+      <!-- STATS CARDS -->
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon">📚</div>
+          <h3 id="totalCourses">0</h3>
+          <p>Courses Available</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">✅</div>
+          <h3 id="enrolledCourses">0</h3>
+          <p>Enrolled Courses</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏆</div>
+          <h3 id="cgpa">0.0</h3>
+          <p>Current CGPA</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🤖</div>
+          <h3 id="recommendations">5</h3>
+          <p>AI Recommendations</p>
+        </div>
+      </div>
+
+      <!-- STUDENT INFO -->
+      <div
+        style="
+          background: white;
+          padding: 25px;
+          border-radius: 12px;
+          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+          margin-bottom: 25px;
+        "
+      >
+        <h2 style="margin-bottom: 20px; color: #1a1a2e">👤 My Profile</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px">
+          <div>
+            <p style="color: #888; font-size: 13px">Full Name</p>
+            <p style="font-weight: 600" id="profileName">—</p>
+          </div>
+          <div>
+            <p style="color: #888; font-size: 13px">Email</p>
+            <p style="font-weight: 600" id="profileEmail">—</p>
+          </div>
+          <div>
+            <p style="color: #888; font-size: 13px">Department</p>
+            <p style="font-weight: 600" id="profileDept">—</p>
+          </div>
+          <div>
+            <p style="color: #888; font-size: 13px">Semester</p>
+            <p style="font-weight: 600" id="profileSemester">—</p>
+          </div>
+          <div>
+            <p style="color: #888; font-size: 13px">Career Goal</p>
+            <p style="font-weight: 600" id="profileCareer">—</p>
+          </div>
+          <div>
+            <p style="color: #888; font-size: 13px">Skill Level</p>
+            <p style="font-weight: 600" id="profileSkill">—</p>
+          </div>
+        </div>
+        <!-- Interests -->
+        <div style="margin-top: 15px">
+          <p style="color: #888; font-size: 13px; margin-bottom: 8px">
+            Interests
+          </p>
+          <div id="interestTags"></div>
+        </div>
+      </div>
+
+      <!-- ENROLLED COURSES -->
+      <div
+        style="
+          background: white;
+          padding: 25px;
+          border-radius: 12px;
+          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        "
+      >
+        <h2 style="margin-bottom: 20px; color: #1a1a2e">📖 My Enrollments</h2>
+        <div id="enrollmentsList">
+          <p style="color: #888">Loading enrollments...</p>
+        </div>
+      </div>
+
+      <!-- GET RECOMMENDATIONS BUTTON -->
+      <div style="text-align: center; margin-top: 30px">
+        <a
+          href="recommendations.html"
+          style="
+            background: #e94560;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            display: inline-block;
+          "
+        >
+          🤖 Get AI Recommendations
+        </a>
+      </div>
+    </div>
+
+    <script>
+      const API = 'http://localhost:5000/api'
+      const token = localStorage.getItem('token')
+
+      // If not logged in → redirect to login
+      if (!token) {
+        window.location.href = 'login.html'
+      }
+
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      }
+
+      // Load everything when page loads
+      window.onload = async () => {
+        document.getElementById('welcomeMsg').textContent =
+          'Loading your dashboard...'
+        await loadProfile()
+        await loadEnrollments()
+        await loadCourseCount()
+        await loadGrades()
+      }
+
+      async function loadProfile() {
+        const res = await fetch(`${API}/auth/profile`, { headers })
+        const data = await res.json()
+
+        document.getElementById('welcomeMsg').textContent =
+          `Welcome back, ${data.name}! 👋`
+        document.getElementById('navName').textContent = data.name
+        document.getElementById('profileName').textContent = data.name
+        document.getElementById('profileEmail').textContent = data.email
+        document.getElementById('profileDept').textContent = data.department
+        document.getElementById('profileSemester').textContent =
+          `Semester ${data.semester}`
+        document.getElementById('profileCareer').textContent = data.careerGoal
+        document.getElementById('profileSkill').textContent = data.skillLevel
+
+        // Render interest tags
+        const tagsDiv = document.getElementById('interestTags')
+        data.interests.forEach((interest) => {
+          tagsDiv.innerHTML += `<span class="reason-tag">${interest}</span>`
+        })
+      }
+
+      async function loadCourseCount() {
+        const res = await fetch(`${API}/courses`, { headers })
+        const data = await res.json()
+        document.getElementById('totalCourses').textContent = data.length
+      }
+
+      async function loadGrades() {
+        const res = await fetch(`${API}/grades`, { headers })
+        const data = await res.json()
+        document.getElementById('cgpa').textContent = data.cgpa || '0.0'
+      }
+
+      async function loadEnrollments() {
+        const res = await fetch(`${API}/enrollments`, { headers })
+        const data = await res.json()
+
+        document.getElementById('enrolledCourses').textContent = data.length
+
+        const list = document.getElementById('enrollmentsList')
+
+        if (data.length === 0) {
+          list.innerHTML =
+            '<p style="color:#888;">No enrollments yet. Get recommendations to enroll!</p>'
+          return
+        }
+
+        list.innerHTML = ''
+        data.forEach((enrollment) => {
+          const statusColor =
+            enrollment.status === 'completed'
+              ? '#27ae60'
+              : enrollment.status === 'failed'
+                ? '#e74c3c'
+                : '#3498db'
+          list.innerHTML += `
+          <div style="display:flex; justify-content:space-between; 
+                      align-items:center; padding:15px; border-bottom:1px solid #f0f0f0;">
+            <div>
+              <p style="font-weight:600;">${enrollment.course.title}</p>
+              <p style="color:#888; font-size:13px;">${enrollment.course.courseCode} 
+                 • ${enrollment.course.creditHours} credit hours</p>
+            </div>
+            <span style="background:${statusColor}; color:white; padding:5px 12px;
+                         border-radius:20px; font-size:12px; font-weight:600;">
+              ${enrollment.status}
+            </span>
+          </div>
+        `
+        })
+      }
+
+      function logout() {
+        localStorage.removeItem('token')
+        localStorage.removeItem('studentName')
+        localStorage.removeItem('studentId')
+        window.location.href = 'login.html'
+      }
+    </script>
+  </body>
+</html>
