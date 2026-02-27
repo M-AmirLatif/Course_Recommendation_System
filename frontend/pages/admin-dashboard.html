@@ -3,82 +3,52 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard — Course Recommender</title>
+    <title>Admin Dashboard - Course Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
   <body>
-    <!-- NAVBAR -->
     <div class="navbar">
-      <span class="logo">⚙️ Admin Panel</span>
-      <div>
+      <span class="logo">Admin Panel</span>
+      <div class="nav-links">
         <a href="admin-courses.html">Manage Courses</a>
         <a href="admin-students.html">View Students</a>
-        <a href="#" onclick="logout()">Logout</a>
+        <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
 
-    <div class="dashboard">
-      <h1>Admin Dashboard</h1>
-      <p class="subtitle">System overview and management</p>
+    <div class="dashboard content-stack">
+      <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <p class="subtitle">System overview and management</p>
+      </div>
 
-      <!-- STATS -->
       <div class="cards-grid">
         <div class="card">
-          <div class="card-icon">📚</div>
+          <div class="card-icon">Courses</div>
           <h3 id="totalCourses">0</h3>
           <p>Total Courses</p>
         </div>
         <div class="card">
-          <div class="card-icon">👨‍🎓</div>
+          <div class="card-icon">Students</div>
           <h3 id="totalStudents">0</h3>
           <p>Total Students</p>
         </div>
         <div class="card">
-          <div class="card-icon">✅</div>
+          <div class="card-icon">Enrollments</div>
           <h3 id="totalEnrollments">0</h3>
           <p>Total Enrollments</p>
         </div>
       </div>
 
-      <!-- QUICK ACTIONS -->
-      <div
-        style="
-          background: white;
-          padding: 25px;
-          border-radius: 12px;
-          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-        "
-      >
-        <h2 style="margin-bottom: 20px; color: #1a1a2e">Quick Actions</h2>
-        <div style="display: flex; gap: 15px; flex-wrap: wrap">
-          <a
-            href="admin-courses.html"
-            style="
-              background: #e94560;
-              color: white;
-              padding: 12px 25px;
-              border-radius: 8px;
-              text-decoration: none;
-              font-weight: 600;
-            "
-          >
-            + Add New Course
-          </a>
-          <a
-            href="admin-students.html"
-            style="
-              background: #1a1a2e;
-              color: white;
-              padding: 12px 25px;
-              border-radius: 8px;
-              text-decoration: none;
-              font-weight: 600;
-            "
-          >
-            👨‍🎓 View All Students
+      <section class="glass-panel">
+        <h2>Quick Actions</h2>
+        <div class="button-row">
+          <a href="admin-courses.html" class="action-link">Add New Course</a>
+          <a href="admin-students.html" class="action-link action-link-secondary">
+            View All Students
           </a>
         </div>
-      </div>
+      </section>
     </div>
 
     <script>
@@ -93,21 +63,17 @@
       }
 
       window.onload = async () => {
-        // Load courses count
         const coursesRes = await fetch(`${API}/courses`, { headers })
         const courses = await coursesRes.json()
         document.getElementById('totalCourses').textContent = courses.length
 
-        // Load students count
         const studentsRes = await fetch(`${API}/admin/students`, { headers })
         const students = await studentsRes.json()
         document.getElementById('totalStudents').textContent = students.length
 
-        // Load enrollments count
         const enrollRes = await fetch(`${API}/admin/enrollments`, { headers })
         const enrollments = await enrollRes.json()
-        document.getElementById('totalEnrollments').textContent =
-          enrollments.length
+        document.getElementById('totalEnrollments').textContent = enrollments.length
       }
 
       function logout() {

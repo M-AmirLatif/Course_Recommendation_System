@@ -3,37 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login — Course Recommender</title>
+    <title>Login - Course Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
   <body>
     <div class="auth-container">
       <div class="auth-box">
-        <h2>🎓 Course Recommender</h2>
-        <p class="subtitle">Login to get AI-powered course recommendations</p>
+        <div class="auth-logo">
+          <div class="logo-icon">CR</div>
+        </div>
+        <h2>Welcome Back</h2>
+        <p class="subtitle">Login to continue to your course recommendations</p>
 
-        <!-- Error Alert -->
         <div class="alert alert-error" id="errorAlert"></div>
 
-        <!-- Login Form -->
         <div class="form-group">
-          <label>Email Address</label>
+          <label for="email">Email Address</label>
           <input type="email" id="email" placeholder="Enter your email" />
         </div>
 
         <div class="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            id="password"
-            placeholder="Enter your password"
-          />
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="Enter your password" />
         </div>
 
         <button class="btn btn-primary" onclick="login()">Login</button>
 
         <div class="auth-link">
-          Don't have an account? <a href="register.html">Register here</a>
+          Do not have an account? <a href="register.html">Register here</a>
         </div>
       </div>
     </div>
@@ -41,20 +38,20 @@
     <script>
       const API = 'http://localhost:5000/api'
 
-      // If already logged in → redirect to dashboard
       if (localStorage.getItem('token')) {
         window.location.href = 'dashboard.html'
       }
 
       async function login() {
-        const email = document.getElementById('email').value
+        const email = document.getElementById('email').value.trim()
         const password = document.getElementById('password').value
         const errorAlert = document.getElementById('errorAlert')
 
-        // Basic validation
+        errorAlert.style.display = 'none'
+
         if (!email || !password) {
           errorAlert.style.display = 'block'
-          errorAlert.textContent = 'Please fill in all fields'
+          errorAlert.textContent = 'Please fill in all fields.'
           return
         }
 
@@ -69,18 +66,15 @@
 
           if (!response.ok) {
             errorAlert.style.display = 'block'
-            errorAlert.textContent = data.message
+            errorAlert.textContent = data.message || 'Login failed.'
             return
           }
 
-          // Save token and student info to localStorage
-          // Save token and student info to localStorage
           localStorage.setItem('token', data.token)
           localStorage.setItem('studentName', data.name)
           localStorage.setItem('studentId', data._id)
           localStorage.setItem('userRole', data.role)
 
-          // Redirect based on role
           if (data.role === 'admin') {
             window.location.href = 'admin-dashboard.html'
           } else {
@@ -92,7 +86,6 @@
         }
       }
 
-      // Allow pressing Enter to login
       document.addEventListener('keypress', function (e) {
         if (e.key === 'Enter') login()
       })

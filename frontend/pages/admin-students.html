@@ -3,74 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Manage Students — Admin</title>
+    <title>Manage Students - Admin</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
   <body>
-    <!-- NAVBAR -->
     <div class="navbar">
-      <span class="logo">⚙️ Admin Panel</span>
-      <div>
+      <span class="logo">Admin Panel</span>
+      <div class="nav-links">
         <a href="admin-dashboard.html">Dashboard</a>
         <a href="admin-courses.html">Courses</a>
-        <a href="#" onclick="logout()">Logout</a>
+        <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
 
-    <div class="dashboard">
-      <h1>👨‍🎓 All Students</h1>
-      <p class="subtitle">View and manage registered students</p>
-
-      <!-- SEARCH -->
-      <div
-        style="
-          background: white;
-          padding: 20px 25px;
-          border-radius: 12px;
-          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-          margin-bottom: 25px;
-          display: flex;
-          gap: 15px;
-          align-items: center;
-        "
-      >
-        <input
-          type="text"
-          id="searchInput"
-          placeholder="Search by name or email..."
-          oninput="filterStudents()"
-          style="
-            flex: 1;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-          "
-        />
-        <span
-          id="studentCount"
-          style="color: #888; font-size: 14px; white-space: nowrap"
-        >
-          Loading...
-        </span>
+    <div class="dashboard content-stack">
+      <div class="page-header">
+        <h1>All Students</h1>
+        <p class="subtitle">View and manage registered students</p>
       </div>
 
-      <!-- STUDENTS LIST -->
-      <div
-        style="
-          background: white;
-          padding: 25px;
-          border-radius: 12px;
-          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-        "
-      >
-        <div id="studentsList">
-          <p style="color: #888; text-align: center; padding: 30px">
-            Loading students...
-          </p>
+      <section class="glass-panel">
+        <div class="search-panel">
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Search by name, email, or student ID"
+            oninput="filterStudents()"
+          />
+          <span id="studentCount" class="search-count">Loading...</span>
         </div>
-      </div>
+      </section>
+
+      <section class="glass-panel">
+        <div id="studentsList">
+          <p class="empty-text">Loading students...</p>
+        </div>
+      </section>
     </div>
 
     <script>
@@ -94,91 +63,75 @@
 
           if (!res.ok) {
             document.getElementById('studentsList').innerHTML =
-              `<p style="color:red; text-align:center;">${data.message}</p>`
+              `<p class="error-text">${data.message}</p>`
             return
           }
 
           allStudents = data
-          document.getElementById('studentCount').textContent =
-            `${data.length} students`
+          document.getElementById('studentCount').textContent = `${data.length} students`
           renderStudents(data)
         } catch (error) {
           document.getElementById('studentsList').innerHTML =
-            '<p style="color:red; text-align:center;">Error loading students</p>'
+            '<p class="error-text">Error loading students.</p>'
         }
+      }
+
+      function cgpaClass(value) {
+        if (value >= 3.5) return 'cgpa-high'
+        if (value >= 2.5) return 'cgpa-mid'
+        return 'cgpa-low'
       }
 
       function renderStudents(students) {
         const list = document.getElementById('studentsList')
 
         if (students.length === 0) {
-          list.innerHTML =
-            '<p style="color:#888; text-align:center; padding:30px;">No students found</p>'
+          list.innerHTML = '<p class="empty-text">No students found.</p>'
           return
         }
 
         list.innerHTML = ''
         students.forEach((student) => {
-          const cgpaColor =
-            student.cgpa >= 3.5
-              ? '#27ae60'
-              : student.cgpa >= 2.5
-                ? '#f39c12'
-                : '#e74c3c'
-
+          const cgpa = Number.parseFloat(student.cgpa) || 0
           list.innerHTML += `
-          <div style="display:flex; justify-content:space-between;
-                      align-items:center; padding:18px;
-                      border-bottom:1px solid #f0f0f0;">
-            <div style="flex:1;">
-              <div style="display:flex; align-items:center; gap:10px;">
-                <div style="width:40px; height:40px; background:#1a1a2e;
-                            border-radius:50%; display:flex; align-items:center;
-                            justify-content:center; color:white; font-weight:700;">
-                  ${student.name.charAt(0).toUpperCase()}
-                </div>
+            <div class="student-row">
+              <div class="student-profile">
+                <div class="avatar-initial">${student.name.charAt(0).toUpperCase()}</div>
                 <div>
-                  <p style="font-weight:700; margin:0;">${student.name}</p>
-                  <p style="color:#888; font-size:13px; margin:0;">
-                    ${student.email}
-                  </p>
+                  <p class="row-title">${student.name}</p>
+                  <p class="row-meta">${student.email}</p>
                 </div>
               </div>
+              <div class="student-cell">
+                <p class="label">Student ID</p>
+                <p class="value">${student.studentId}</p>
+              </div>
+              <div class="student-cell">
+                <p class="label">Department</p>
+                <p class="value">${student.department}</p>
+              </div>
+              <div class="student-cell">
+                <p class="label">Semester</p>
+                <p class="value">${student.semester}</p>
+              </div>
+              <div class="student-cell">
+                <p class="label">CGPA</p>
+                <p class="value ${cgpaClass(cgpa)}">${cgpa.toFixed(2)}</p>
+              </div>
+              <div class="student-cell">
+                <p class="label">Career Goal</p>
+                <p class="value">${student.careerGoal || '-'}</p>
+              </div>
+              <div class="row-actions">
+                <button
+                  class="admin-action-btn btn-delete"
+                  onclick="deleteStudent('${student._id}', '${student.name}')"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-            <div style="flex:1; text-align:center;">
-              <p style="font-size:13px; color:#888; margin:0;">Student ID</p>
-              <p style="font-weight:600; margin:0;">${student.studentId}</p>
-            </div>
-            <div style="flex:1; text-align:center;">
-              <p style="font-size:13px; color:#888; margin:0;">Department</p>
-              <p style="font-weight:600; margin:0;">${student.department}</p>
-            </div>
-            <div style="flex:1; text-align:center;">
-              <p style="font-size:13px; color:#888; margin:0;">Semester</p>
-              <p style="font-weight:600; margin:0;">${student.semester}</p>
-            </div>
-            <div style="flex:1; text-align:center;">
-              <p style="font-size:13px; color:#888; margin:0;">CGPA</p>
-              <p style="font-weight:700; color:${cgpaColor}; margin:0;">
-                ${student.cgpa || '0.00'}
-              </p>
-            </div>
-            <div style="flex:1; text-align:center;">
-              <p style="font-size:13px; color:#888; margin:0;">Career Goal</p>
-              <p style="font-weight:600; font-size:13px; margin:0;">
-                ${student.careerGoal || '—'}
-              </p>
-            </div>
-            <div>
-              <button onclick="deleteStudent('${student._id}', '${student.name}')"
-                style="background:#e74c3c; color:white; border:none;
-                       padding:8px 15px; border-radius:8px; cursor:pointer;
-                       font-size:13px;">
-                🗑️ Delete
-              </button>
-            </div>
-          </div>
-        `
+          `
         })
       }
 
@@ -190,8 +143,7 @@
             s.email.toLowerCase().includes(query) ||
             s.studentId.toLowerCase().includes(query),
         )
-        document.getElementById('studentCount').textContent =
-          `${filtered.length} students`
+        document.getElementById('studentCount').textContent = `${filtered.length} students`
         renderStudents(filtered)
       }
 
@@ -203,9 +155,7 @@
           headers,
         })
 
-        if (res.ok) {
-          loadStudents()
-        }
+        if (res.ok) loadStudents()
       }
 
       function logout() {

@@ -3,59 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recommendations — Course Recommender</title>
+    <title>Recommendations - Course Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
   <body>
-    <!-- NAVBAR -->
     <div class="navbar">
-      <span class="logo">🎓 Course Recommender</span>
-      <div>
-        <span id="navName" style="margin-right: 15px; font-size: 14px"></span>
+      <span class="logo">Course Recommender</span>
+      <div class="nav-links">
+        <span id="navName" class="nav-name"></span>
         <a href="dashboard.html">Dashboard</a>
-        <a href="#" onclick="logout()">Logout</a>
+        <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="dashboard">
-      <h1>🤖 AI Course Recommendations</h1>
-      <p class="subtitle" id="subtitleMsg">Analyzing your profile...</p>
-
-      <!-- STUDENT SUMMARY -->
-      <div
-        style="
-          background: white;
-          padding: 20px 25px;
-          border-radius: 12px;
-          box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-          margin-bottom: 25px;
-          display: flex;
-          gap: 30px;
-          flex-wrap: wrap;
-          align-items: center;
-        "
-      >
-        <div>
-          <p style="color: #888; font-size: 12px">Career Goal</p>
-          <p style="font-weight: 700; color: #1a1a2e" id="careerGoal">—</p>
-        </div>
-        <div>
-          <p style="color: #888; font-size: 12px">Interests</p>
-          <div id="interestTags"></div>
-        </div>
-        <div>
-          <p style="color: #888; font-size: 12px">Courses Analyzed</p>
-          <p style="font-weight: 700; color: #e94560" id="totalAnalyzed">—</p>
-        </div>
+    <div class="dashboard content-stack">
+      <div class="page-header">
+        <h1>AI Course Recommendations</h1>
+        <p class="subtitle" id="subtitleMsg">Analyzing your profile...</p>
       </div>
 
-      <!-- RECOMMENDATIONS LIST -->
-      <div id="recommendationsList">
-        <p style="color: #888; text-align: center; padding: 40px">
-          Loading recommendations...
-        </p>
-      </div>
+      <section class="glass-panel">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <label>Career Goal</label>
+            <p id="careerGoal">-</p>
+          </div>
+          <div class="summary-item">
+            <label>Interests</label>
+            <div id="interestTags" class="tag-list"></div>
+          </div>
+          <div class="summary-item">
+            <label>Courses Analyzed</label>
+            <p id="totalAnalyzed">-</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass-panel">
+        <h2>Recommended For You</h2>
+        <div id="recommendationsList">
+          <p class="empty-text">Loading recommendations...</p>
+        </div>
+      </section>
     </div>
 
     <script>
@@ -71,140 +60,122 @@
         Authorization: `Bearer ${token}`,
       }
 
-      document.getElementById('navName').textContent =
-        localStorage.getItem('studentName')
+      document.getElementById('navName').textContent = localStorage.getItem('studentName')
 
       window.onload = async () => {
         await loadRecommendations()
       }
 
+      function difficultyClass(value) {
+        if (value === 'beginner') return 'diff-beginner'
+        if (value === 'intermediate') return 'diff-intermediate'
+        return 'diff-advanced'
+      }
+
+      function difficultyLabel(value) {
+        return (value || '').charAt(0).toUpperCase() + (value || '').slice(1)
+      }
+
       async function loadRecommendations() {
         document.getElementById('recommendationsList').innerHTML = `
-          <div style="text-align:center; padding:60px;">
-            <div style="font-size:50px;">🤖</div>
-            <p style="color:#888; margin-top:15px; font-size:16px;">
-              AI is analyzing your profile...
-            </p>
+          <div class="loading-box">
+            <div class="loading-emoji">AI</div>
+            <p>Analyzing your profile...</p>
           </div>
         `
+
         try {
           const res = await fetch(`${API}/recommendations`, { headers })
           const data = await res.json()
 
-          // Fill student summary
           document.getElementById('subtitleMsg').textContent =
             `Personalized recommendations for ${data.student}`
           document.getElementById('careerGoal').textContent = data.careerGoal
           document.getElementById('totalAnalyzed').textContent =
             `${data.totalCoursesAnalyzed} courses`
 
-          // Render interest tags
           const tagsDiv = document.getElementById('interestTags')
-          data.interests.forEach((interest) => {
-            tagsDiv.innerHTML += `<span class="reason-tag">${interest}</span>`
+          tagsDiv.innerHTML = ''
+          const interests = data.interests || []
+          interests.forEach((interest) => {
+            tagsDiv.innerHTML += `<span class="tag">${interest}</span>`
           })
 
-          // Render recommendation cards
           const list = document.getElementById('recommendationsList')
 
           if (data.recommendations.length === 0) {
             list.innerHTML = `
-            <div style="text-align:center; padding:40px; background:white;
-                        border-radius:12px;">
-              <p style="font-size:40px;">🎓</p>
-              <p style="color:#888; margin-top:10px;">
-                No recommendations available. 
-                Update your profile with interests and career goals!
+              <p class="empty-text">
+                No recommendations available yet. Update your profile with interests and career goals.
               </p>
-            </div>`
+            `
             return
           }
 
           list.innerHTML = ''
           data.recommendations.forEach((rec) => {
-            // Rank medal
             const medal =
               rec.rank === 1
-                ? '🥇'
+                ? '1'
                 : rec.rank === 2
-                  ? '🥈'
+                  ? '2'
                   : rec.rank === 3
-                    ? '🥉'
-                    : rec.rank === 4
-                      ? '4️⃣'
-                      : '5️⃣'
+                    ? '3'
+                    : `#${rec.rank}`
 
-            // Difficulty color
-            const diffColor =
-              rec.difficulty === 'beginner'
-                ? '#27ae60'
-                : rec.difficulty === 'intermediate'
-                  ? '#f39c12'
-                  : '#e74c3c'
-
-            // Build reasons tags
-            const reasonTags = rec.whyRecommended
-              .map((reason) => `<span class="reason-tag">✓ ${reason}</span>`)
+            const reasonTags = (rec.whyRecommended || [])
+              .map((reason) => `<span class="reason-tag">${reason}</span>`)
               .join('')
 
             list.innerHTML += `
-            <div class="rec-card">
+              <div class="rec-card">
                 <div class="rank">${medal}</div>
-                <div class="course-info" style="flex:1;">
-                <h3>${rec.title}</h3>
-                <p>
-                    <strong>${rec.courseCode}</strong> &nbsp;•&nbsp;
-                    <span style="color:${diffColor}; font-weight:600;">
-                    ${rec.difficulty}
-                    </span> &nbsp;•&nbsp;
-                     ⭐ ${rec.rating}/5 &nbsp;•&nbsp;
-                     📈 ${rec.successRate}% success rate &nbsp;•&nbsp;
-                     🎯 ${rec.successProbability}% success probability
-                <div class="reasons" style="margin-top:10px;">
-                    ${reasonTags}
+                <div class="course-info">
+                  <h3>${rec.title}</h3>
+                  <div class="course-meta">
+                    <span><strong>${rec.courseCode}</strong></span>
+                    <span class="${difficultyClass(rec.difficulty)}">${difficultyLabel(rec.difficulty)}</span>
+                    <span>Rating ${rec.rating}/5</span>
+                    <span>Success ${rec.successRate}%</span>
+                    <span>Probability ${rec.successProbability}%</span>
+                  </div>
+                  <div class="reasons">${reasonTags}</div>
                 </div>
-                </div>
-                <div style="text-align:center; display:flex; flex-direction:column; gap:8px;">
-                <div class="score-badge">Score: ${rec.score}</div>
-                <button onclick="enrollCourse('${rec.courseCode}')"
-                    style="background:#1a1a2e; color:white; border:none; 
-                        padding:8px 16px; border-radius:8px;
-                        cursor:pointer; font-size:13px;">
-                    + Enroll
-                </button>
-                <div style="display:flex; gap:5px; justify-content:center;">
-                    <button onclick="sendFeedback('${rec.courseCode}', 'like')"
-                    style="background:#27ae60; color:white; border:none;
-                            padding:6px 12px; border-radius:8px;
-                            cursor:pointer; font-size:13px; flex:1;"
-                    id="like-${rec.courseCode}">
-                    👍 Like
+                <div class="actions">
+                  <div class="score-badge">Score ${rec.score}</div>
+                  <button class="btn-enroll" onclick="enrollCourse('${rec.courseCode}')">Enroll</button>
+                  <div class="feedback-btns">
+                    <button
+                      class="btn-like"
+                      onclick="sendFeedback('${rec.courseCode}', 'like')"
+                      id="like-${rec.courseCode}"
+                    >
+                      Like
                     </button>
-                    <button onclick="sendFeedback('${rec.courseCode}', 'dislike')"
-                    style="background:#e74c3c; color:white; border:none;
-                            padding:6px 12px; border-radius:8px;
-                            cursor:pointer; font-size:13px; flex:1;"
-                    id="dislike-${rec.courseCode}">
-                    👎 Dislike
+                    <button
+                      class="btn-dislike"
+                      onclick="sendFeedback('${rec.courseCode}', 'dislike')"
+                      id="dislike-${rec.courseCode}"
+                    >
+                      Dislike
                     </button>
+                  </div>
                 </div>
-                </div>
-            </div>
+              </div>
             `
           })
         } catch (error) {
           document.getElementById('recommendationsList').innerHTML =
-            '<p style="color:red; text-align:center;">Error loading recommendations. Make sure backend is running.</p>'
+            '<p class="error-text">Error loading recommendations. Make sure backend is running.</p>'
         }
       }
 
       async function enrollCourse(courseCode) {
-        // Get course ID from course code
         const coursesRes = await fetch(`${API}/courses`, { headers })
         const courses = await coursesRes.json()
         const course = courses.find((c) => c.courseCode === courseCode)
 
-        if (!course) return alert('Course not found!')
+        if (!course) return alert('Course not found.')
 
         const res = await fetch(`${API}/enrollments`, {
           method: 'POST',
@@ -219,40 +190,34 @@
         const data = await res.json()
 
         if (res.ok) {
-          alert(`✅ Successfully enrolled in ${course.title}!`)
-          loadRecommendations() // reload to update list
+          alert(`Successfully enrolled in ${course.title}.`)
+          loadRecommendations()
         } else {
           alert(data.message)
         }
       }
 
       async function sendFeedback(courseCode, type) {
-        // Get course ID
         const coursesRes = await fetch(`${API}/courses`, { headers })
         const courses = await coursesRes.json()
         const course = courses.find((c) => c.courseCode === courseCode)
-
         if (!course) return
 
-        // Check if preferences exist
         const prefRes = await fetch(`${API}/preferences`, { headers })
 
         let res
         if (prefRes.ok) {
-          // Preferences exist → update them
           const pref = await prefRes.json()
 
           let likedCourses = pref.likedCourses || []
           let dislikedCourses = pref.dislikedCourses || []
 
           if (type === 'like') {
-            // Add to liked, remove from disliked
             if (!likedCourses.includes(course._id)) {
               likedCourses.push(course._id)
             }
             dislikedCourses = dislikedCourses.filter((id) => id !== course._id)
           } else {
-            // Add to disliked, remove from liked
             if (!dislikedCourses.includes(course._id)) {
               dislikedCourses.push(course._id)
             }
@@ -265,7 +230,6 @@
             body: JSON.stringify({ likedCourses, dislikedCourses }),
           })
         } else {
-          // No preferences → create them
           res = await fetch(`${API}/preferences`, {
             method: 'POST',
             headers,
@@ -277,23 +241,17 @@
         }
 
         if (res.ok) {
-          // Visual feedback
           const likeBtn = document.getElementById(`like-${courseCode}`)
           const dislikeBtn = document.getElementById(`dislike-${courseCode}`)
 
           if (type === 'like') {
-            likeBtn.style.background = '#1e8449'
-            likeBtn.textContent = '👍 Liked!'
-            dislikeBtn.style.background = '#e74c3c'
-            dislikeBtn.textContent = '👎 Dislike'
+            likeBtn.textContent = 'Liked'
+            dislikeBtn.textContent = 'Dislike'
           } else {
-            dislikeBtn.style.background = '#922b21'
-            dislikeBtn.textContent = '👎 Disliked!'
-            likeBtn.style.background = '#27ae60'
-            likeBtn.textContent = '👍 Like'
+            dislikeBtn.textContent = 'Disliked'
+            likeBtn.textContent = 'Like'
           }
 
-          // Reload recommendations after 1 second to reflect changes
           setTimeout(() => {
             loadRecommendations()
           }, 1000)
