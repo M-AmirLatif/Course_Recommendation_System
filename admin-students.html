@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Students Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Students Management</h1>
+    <input type="text" id="searchInput" placeholder="Search for students..." onkeyup="filterTable()">
+
+    <table id="studentsTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Course</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>John Doe</td>
+                <td>20</td>
+                <td>Computer Science</td>
+                <td><button>Edit</button> <button>Delete</button></td>
+            </tr>
+            <tr>
+                <td>Jane Smith</td>
+                <td>22</td>
+                <td>Information Technology</td>
+                <td><button>Edit</button> <button>Delete</button></td>
+            </tr>
+            <!-- Add more student rows as needed -->
+        </tbody>
+    </table>
+
+    <script>
+        function filterTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('studentsTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                const td = tr[i].getElementsByTagName('td');
+                let shouldDisplay = false;
+                for (let j = 0; j < td.length; j++) {
+                    if (td[j] && td[j].textContent.toLowerCase().includes(filter)) {
+                        shouldDisplay = true;
+                        break;
+                    }
+                }
+                tr[i].style.display = shouldDisplay ? '' : 'none';
+            }
+        }
+    </script>
+</body>
+</html>
