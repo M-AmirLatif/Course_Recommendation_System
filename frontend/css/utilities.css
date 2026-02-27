@@ -1,0 +1,83 @@
+.gradients {
+    /* Gradient utility classes */
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+}
+
+.card {
+    /* Card variants */
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.text-effect {
+    /* Text effects */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.border {
+    /* Borders */
+    border: 1px solid #ccc;
+}
+
+.backdrop {
+    /* Backdrop effects */
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.transform {
+    /* Transforms */
+    transform: scale(1.1);
+}
+
+.button {
+    /* Button styles */
+    background: #6a11cb;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.profile {
+    /* Profile styles */
+    border-radius: 50%;
+}
+
+.stat-card {
+    /* Stat cards */
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.chart {
+    /* Chart styles */
+    width: 100%;
+    height: 200px;
+}
+
+.dropdown {
+    /* Dropdown styles */
+    position: relative;
+}
+
+.accordion {
+    /* Accordion styles */
+    background: #f1f1f1;
+    border: 1px solid #ccc;
+}
+
+.tab {
+    /* Tab styles */
+    background: #ffffff;
+}
+
+.micro-interaction {
+    /* Micro-interaction styles */
+    transition: all 0.3s ease;
+}
