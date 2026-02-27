@@ -6,7 +6,7 @@
     <title>Manage Students - Admin</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
-  <body>
+  <body class="page-admin page-admin-students">
     <div class="navbar">
       <span class="logo">Admin Panel</span>
       <div class="nav-links">
@@ -22,7 +22,7 @@
         <p class="subtitle">View and manage registered students</p>
       </div>
 
-      <section class="glass-panel">
+      <section class="glass-panel admin-search-wrap">
         <div class="search-panel">
           <input
             type="text"
@@ -35,7 +35,7 @@
         </div>
       </section>
 
-      <section class="glass-panel">
+      <section class="glass-panel admin-students-wrap">
         <div id="studentsList">
           <p class="empty-text">Loading students...</p>
         </div>
@@ -68,7 +68,8 @@
           }
 
           allStudents = data
-          document.getElementById('studentCount').textContent = `${data.length} students`
+          document.getElementById('studentCount').textContent =
+            `${data.length} students`
           renderStudents(data)
         } catch (error) {
           document.getElementById('studentsList').innerHTML =
@@ -143,7 +144,8 @@
             s.email.toLowerCase().includes(query) ||
             s.studentId.toLowerCase().includes(query),
         )
-        document.getElementById('studentCount').textContent = `${filtered.length} students`
+        document.getElementById('studentCount').textContent =
+          `${filtered.length} students`
         renderStudents(filtered)
       }
 

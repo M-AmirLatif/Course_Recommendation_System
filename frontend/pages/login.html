@@ -6,11 +6,11 @@
     <title>Login - Course Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
-  <body>
+  <body class="page-auth page-login">
     <div class="auth-container">
       <div class="auth-box">
         <div class="auth-logo">
-          <div class="logo-icon">CR</div>
+          <div class="logo-icon">Course Recommender</div>
         </div>
         <h2>Welcome Back</h2>
         <p class="subtitle">Login to continue to your course recommendations</p>
@@ -24,7 +24,11 @@
 
         <div class="form-group">
           <label for="password">Password</label>
-          <input type="password" id="password" placeholder="Enter your password" />
+          <input
+            type="password"
+            id="password"
+            placeholder="Enter your password"
+          />
         </div>
 
         <button class="btn btn-primary" onclick="login()">Login</button>

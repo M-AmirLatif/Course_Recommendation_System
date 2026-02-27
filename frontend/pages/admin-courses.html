@@ -6,7 +6,7 @@
     <title>Manage Courses - Admin</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
-  <body>
+  <body class="page-admin page-admin-courses">
     <div class="navbar">
       <span class="logo">Admin Panel</span>
       <div class="nav-links">
@@ -22,7 +22,7 @@
         <p class="subtitle">Add, edit, and maintain the course catalog</p>
       </div>
 
-      <section class="glass-panel">
+      <section class="glass-panel admin-courses-form">
         <h2 id="formTitle">Add New Course</h2>
 
         <div class="alert alert-error" id="errorAlert"></div>
@@ -41,7 +41,11 @@
 
         <div class="form-group">
           <label for="description">Description</label>
-          <input type="text" id="description" placeholder="Brief course description" />
+          <input
+            type="text"
+            id="description"
+            placeholder="Brief course description"
+          />
         </div>
 
         <div class="form-grid form-grid-3">
@@ -51,7 +55,13 @@
           </div>
           <div class="form-group">
             <label for="creditHours">Credit Hours</label>
-            <input type="number" id="creditHours" placeholder="3" min="1" max="6" />
+            <input
+              type="number"
+              id="creditHours"
+              placeholder="3"
+              min="1"
+              max="6"
+            />
           </div>
           <div class="form-group">
             <label for="difficultyLevel">Difficulty Level</label>
@@ -66,7 +76,13 @@
         <div class="form-grid form-grid-2">
           <div class="form-group">
             <label for="successRate">Success Rate (%)</label>
-            <input type="number" id="successRate" placeholder="85" min="0" max="100" />
+            <input
+              type="number"
+              id="successRate"
+              placeholder="85"
+              min="0"
+              max="100"
+            />
           </div>
           <div class="form-group">
             <label for="averageRating">Average Rating (0-5)</label>
@@ -83,26 +99,42 @@
 
         <div class="form-group">
           <label for="tags">Tags (comma separated)</label>
-          <input type="text" id="tags" placeholder="AI, Python, Machine Learning" />
+          <input
+            type="text"
+            id="tags"
+            placeholder="AI, Python, Machine Learning"
+          />
         </div>
 
         <div class="form-group">
           <label for="careerOutcomes">Career Outcomes (comma separated)</label>
-          <input type="text" id="careerOutcomes" placeholder="Data Scientist, ML Engineer" />
+          <input
+            type="text"
+            id="careerOutcomes"
+            placeholder="Data Scientist, ML Engineer"
+          />
         </div>
 
         <div class="form-group">
           <label for="skillsGained">Skills Gained (comma separated)</label>
-          <input type="text" id="skillsGained" placeholder="Python, TensorFlow, Statistics" />
+          <input
+            type="text"
+            id="skillsGained"
+            placeholder="Python, TensorFlow, Statistics"
+          />
         </div>
 
         <div class="button-row">
-          <button class="btn btn-primary btn-auto" onclick="saveCourse()">Save Course</button>
-          <button class="btn btn-secondary btn-auto" onclick="resetForm()">Cancel</button>
+          <button class="btn btn-primary btn-auto" onclick="saveCourse()">
+            Save Course
+          </button>
+          <button class="btn btn-secondary btn-auto" onclick="resetForm()">
+            Cancel
+          </button>
         </div>
       </section>
 
-      <section class="glass-panel">
+      <section class="glass-panel admin-courses-list">
         <h2>All Courses</h2>
         <div id="coursesList">
           <p class="empty-text">Loading courses...</p>
@@ -184,10 +216,15 @@
           title: document.getElementById('title').value.trim(),
           description: document.getElementById('description').value.trim(),
           department: document.getElementById('department').value.trim(),
-          creditHours: parseInt(document.getElementById('creditHours').value, 10),
+          creditHours: parseInt(
+            document.getElementById('creditHours').value,
+            10,
+          ),
           difficultyLevel: document.getElementById('difficultyLevel').value,
           successRate: parseFloat(document.getElementById('successRate').value),
-          averageRating: parseFloat(document.getElementById('averageRating').value),
+          averageRating: parseFloat(
+            document.getElementById('averageRating').value,
+          ),
           tags: document
             .getElementById('tags')
             .value.split(',')
@@ -251,12 +288,17 @@
         document.getElementById('description').value = course.description
         document.getElementById('department').value = course.department
         document.getElementById('creditHours').value = course.creditHours
-        document.getElementById('difficultyLevel').value = course.difficultyLevel
+        document.getElementById('difficultyLevel').value =
+          course.difficultyLevel
         document.getElementById('successRate').value = course.successRate
         document.getElementById('averageRating').value = course.averageRating
         document.getElementById('tags').value = (course.tags || []).join(', ')
-        document.getElementById('careerOutcomes').value = (course.careerOutcomes || []).join(', ')
-        document.getElementById('skillsGained').value = (course.skillsGained || []).join(', ')
+        document.getElementById('careerOutcomes').value = (
+          course.careerOutcomes || []
+        ).join(', ')
+        document.getElementById('skillsGained').value = (
+          course.skillsGained || []
+        ).join(', ')
 
         editingCourseId = id
         document.getElementById('formTitle').textContent = 'Edit Course'

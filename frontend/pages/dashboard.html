@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <section class="glass-panel">
+      <section class="glass-panel profile-panel">
         <h2>My Profile</h2>
         <div class="profile-grid">
           <div class="profile-item">
@@ -79,7 +79,7 @@
         </div>
       </section>
 
-      <section class="glass-panel">
+      <section class="glass-panel enrollments-panel">
         <h2>My Enrollments</h2>
         <div id="enrollmentsList">
           <p class="empty-text">Loading enrollments...</p>
@@ -87,7 +87,9 @@
       </section>
 
       <div class="center-cta">
-        <a href="recommendations.html" class="cta-btn">Get AI Recommendations</a>
+        <a href="recommendations.html" class="cta-btn"
+          >Get AI Recommendations</a
+        >
       </div>
     </div>
 
@@ -105,7 +107,8 @@
       }
 
       window.onload = async () => {
-        document.getElementById('welcomeMsg').textContent = 'Loading your dashboard...'
+        document.getElementById('welcomeMsg').textContent =
+          'Loading your dashboard...'
         await loadProfile()
         await loadEnrollments()
         await loadCourseCount()
@@ -116,12 +119,14 @@
         const res = await fetch(`${API}/auth/profile`, { headers })
         const data = await res.json()
 
-        document.getElementById('welcomeMsg').textContent = `Welcome back, ${data.name}`
+        document.getElementById('welcomeMsg').textContent =
+          `Welcome back, ${data.name}`
         document.getElementById('navName').textContent = data.name
         document.getElementById('profileName').textContent = data.name
         document.getElementById('profileEmail').textContent = data.email
         document.getElementById('profileDept').textContent = data.department
-        document.getElementById('profileSemester').textContent = `Semester ${data.semester}`
+        document.getElementById('profileSemester').textContent =
+          `Semester ${data.semester}`
         document.getElementById('profileCareer').textContent = data.careerGoal
         document.getElementById('profileSkill').textContent = data.skillLevel
 
@@ -170,9 +175,12 @@
 
           list.innerHTML += `
             <div class="enrollment-row">
-              <div>
+              <div class="enrollment-main">
                 <p class="enrollment-title">${enrollment.course.title}</p>
-                <p class="enrollment-meta">${enrollment.course.courseCode} | ${enrollment.course.creditHours} credit hours</p>
+                <div class="enrollment-meta">
+                  <span class="meta-pill">${enrollment.course.courseCode}</span>
+                  <span class="meta-pill">${enrollment.course.creditHours} Credit Hours</span>
+                </div>
               </div>
               <span class="status-badge ${statusClass}">${enrollment.status}</span>
             </div>
@@ -189,4 +197,3 @@
     </script>
   </body>
 </html>
-

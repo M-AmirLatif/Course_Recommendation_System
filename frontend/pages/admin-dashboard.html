@@ -6,7 +6,7 @@
     <title>Admin Dashboard - Course Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
-  <body>
+  <body class="page-admin page-admin-dashboard">
     <div class="navbar">
       <span class="logo">Admin Panel</span>
       <div class="nav-links">
@@ -40,11 +40,14 @@
         </div>
       </div>
 
-      <section class="glass-panel">
+      <section class="glass-panel admin-quick-actions">
         <h2>Quick Actions</h2>
         <div class="button-row">
           <a href="admin-courses.html" class="action-link">Add New Course</a>
-          <a href="admin-students.html" class="action-link action-link-secondary">
+          <a
+            href="admin-students.html"
+            class="action-link action-link-secondary"
+          >
             View All Students
           </a>
         </div>
@@ -73,7 +76,8 @@
 
         const enrollRes = await fetch(`${API}/admin/enrollments`, { headers })
         const enrollments = await enrollRes.json()
-        document.getElementById('totalEnrollments').textContent = enrollments.length
+        document.getElementById('totalEnrollments').textContent =
+          enrollments.length
       }
 
       function logout() {

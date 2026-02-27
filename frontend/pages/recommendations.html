@@ -6,7 +6,7 @@
     <title>Recommendations - Course Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
   </head>
-  <body>
+  <body class="page-recommendations">
     <div class="navbar">
       <span class="logo">Course Recommender</span>
       <div class="nav-links">
@@ -22,7 +22,7 @@
         <p class="subtitle" id="subtitleMsg">Analyzing your profile...</p>
       </div>
 
-      <section class="glass-panel">
+      <section class="glass-panel rec-summary-panel">
         <div class="summary-grid">
           <div class="summary-item">
             <label>Career Goal</label>
@@ -39,7 +39,7 @@
         </div>
       </section>
 
-      <section class="glass-panel">
+      <section class="glass-panel rec-results-panel">
         <h2>Recommended For You</h2>
         <div id="recommendationsList">
           <p class="empty-text">Loading recommendations...</p>
@@ -60,7 +60,8 @@
         Authorization: `Bearer ${token}`,
       }
 
-      document.getElementById('navName').textContent = localStorage.getItem('studentName')
+      document.getElementById('navName').textContent =
+        localStorage.getItem('studentName')
 
       window.onload = async () => {
         await loadRecommendations()
