@@ -34,13 +34,15 @@
         <button class="btn btn-primary" onclick="login()">Login</button>
 
         <div class="auth-link">
-          Do not have an account? <a href="register.html">Register here</a>
+          Do not have an account?
+          <a href="frontend/pages/register.html">Register here</a>
         </div>
       </div>
     </div>
 
     <script>
-      const API = 'https://courserecommendationsystem-production-74ab.up.railway.app/api'
+      const API =
+        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
 
       if (localStorage.getItem('token')) {
         window.location.href = 'dashboard.html'
