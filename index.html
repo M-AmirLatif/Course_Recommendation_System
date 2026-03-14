@@ -34,7 +34,8 @@
         <button class="btn btn-primary" onclick="login()">Login</button>
 
         <div class="auth-link">
-          Do not have an account? <a href="register.html">Register here</a>
+          Do not have an account?
+          <a href="frontend/pages/register.html">Register here</a>
         </div>
       </div>
     </div>
@@ -44,7 +45,12 @@
         'https://courserecommendationsystem-production-74ab.up.railway.app/api'
 
       if (localStorage.getItem('token')) {
-        window.location.href = 'dashboard.html'
+        const role = localStorage.getItem('userRole')
+        if (role === 'admin') {
+          window.location.href = 'frontend/pages/admin-dashboard.html'
+        } else {
+          window.location.href = 'frontend/pages/dashboard.html'
+        }
       }
 
       async function login() {
@@ -81,13 +87,13 @@
           localStorage.setItem('userRole', data.role)
 
           if (data.role === 'admin') {
-            window.location.href = 'admin-dashboard.html'
+            window.location.href = 'frontend/pages/admin-dashboard.html'
           } else {
-            window.location.href = 'dashboard.html'
+            window.location.href = 'frontend/pages/dashboard.html'
           }
         } catch (error) {
           errorAlert.style.display = 'block'
-          errorAlert.textContent = 'Server error. Make sure backend is running.'
+          errorAlert.textContent = 'Server error. Please try again.'
         }
       }
 
