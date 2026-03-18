@@ -22,7 +22,6 @@ app.use(
     credentials: true,
   }),
 )
-
 app.use('/api/degrees', require('./routes/degreeRoutes'))
 
 app.use(express.json())
