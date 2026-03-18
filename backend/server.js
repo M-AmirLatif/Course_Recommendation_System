@@ -10,7 +10,7 @@ connectDB()
 
 const app = express()
 
-// Middleware
+// ── Middleware (ORDER MATTERS) ─────────────────
 app.use(
   cors({
     origin: [
@@ -22,11 +22,11 @@ app.use(
     credentials: true,
   }),
 )
-app.use('/api/degrees', require('./routes/degreeRoutes'))
 
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-// Routes (we will add these one by one)
+// ── Routes ─────────────────────────────────────
 app.use('/api/auth', require('./routes/authRoutes'))
 app.use('/api/courses', require('./routes/courseRoutes'))
 app.use('/api/recommendations', require('./routes/recommendationRoutes'))
@@ -34,18 +34,23 @@ app.use('/api/enrollments', require('./routes/enrollmentRoutes'))
 app.use('/api/grades', require('./routes/gradeRoutes'))
 app.use('/api/preferences', require('./routes/preferenceRoutes'))
 app.use('/api/admin', require('./routes/adminRoutes'))
+app.use('/api/degrees', require('./routes/degreeRoutes'))
 
-// Test route
+// ── Health check ───────────────────────────────
 app.get('/', (req, res) => {
-  res.json({ message: 'Course Recommender API is running!' })
+  res.json({
+    message: 'Course Recommender API is running!',
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  })
 })
 
-// Handle unknown routes
+// ── 404 Handler ────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` })
 })
 
-// Global error handler
+// ── Global Error Handler ───────────────────────
 app.use((err, req, res, next) => {
   console.error(err.stack)
   res.status(500).json({
