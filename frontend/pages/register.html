@@ -5,6 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register - Course Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      .step-indicator {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 28px;
+      }
+      .step-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s;
+      }
+      .step-dot.active {
+        background: var(--accent);
+        box-shadow: 0 0 10px var(--accent-glow);
+        width: 28px;
+        border-radius: 5px;
+      }
+      .step-dot.done {
+        background: var(--success);
+      }
+      .step-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .step-title span {
+        color: var(--accent);
+      }
+      .rating-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+      }
+      .rating-btn {
+        flex: 1;
+        min-width: 70px;
+        padding: 10px 8px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'DM Sans', sans-serif;
+        text-align: center;
+      }
+      .rating-btn:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+      .rating-btn.selected {
+        border-color: var(--accent);
+        background: rgba(59, 130, 246, 0.15);
+        color: #93c5fd;
+      }
+      .interest-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 6px;
+      }
+      .interest-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(133, 158, 196, 0.25);
+        background: linear-gradient(
+          145deg,
+          rgba(11, 24, 50, 0.85),
+          rgba(28, 44, 78, 0.65)
+        );
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 13px;
+        font-weight: 600;
+        color: #c5d4ea;
+        user-select: none;
+      }
+      .interest-chip:hover {
+        border-color: rgba(96, 165, 250, 0.5);
+        transform: translateY(-1px);
+      }
+      .interest-chip.selected {
+        border-color: rgba(96, 165, 250, 0.7);
+        background: linear-gradient(
+          145deg,
+          rgba(35, 71, 161, 0.35),
+          rgba(79, 70, 183, 0.3)
+        );
+        color: #e0edff;
+      }
+      .interest-chip .chip-icon {
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+      .step-nav {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+      }
+      .step-nav .btn {
+        flex: 1;
+      }
+      @media (max-width: 560px) {
+        .interest-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
   </head>
   <body class="page-auth page-register">
     <div class="auth-container">
@@ -14,20 +137,31 @@
         </div>
         <h2>Create Your Account</h2>
         <p class="subtitle">
-          Register to get personalized course recommendations
+          Answer a few questions to get personalized degree recommendations
         </p>
 
         <div class="alert alert-error" id="errorAlert"></div>
         <div class="alert alert-success" id="successAlert"></div>
 
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+          <div class="step-dot active" id="dot1"></div>
+          <div class="step-dot" id="dot2"></div>
+          <div class="step-dot" id="dot3"></div>
+          <div class="step-dot" id="dot4"></div>
+        </div>
+
+        <!-- ── STEP 1: Basic Info ── -->
         <div id="step1">
+          <p class="step-title">Step 1 of 4 — <span>Basic Information</span></p>
+
           <div class="form-grid form-grid-2">
             <div class="form-group">
               <label for="name">Full Name</label>
               <input type="text" id="name" placeholder="Ahmed Ali" />
             </div>
             <div class="form-group">
-              <label for="studentId">Student ID</label>
+              <label for="studentId">Student / Roll ID</label>
               <input type="text" id="studentId" placeholder="CS-2021-001" />
             </div>
           </div>
@@ -46,162 +180,581 @@
             />
           </div>
 
-          <div class="form-grid form-grid-2">
-            <div class="form-group">
-              <label for="department">Department</label>
-              <select id="department">
-                <option value="">Select Department</option>
-                <option value="Computer Science">Computer Science</option>
-                <option value="Business">Business</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Mathematics">Mathematics</option>
-                <option value="Design">Design</option>
-              </select>
+          <div class="form-group">
+            <label for="educationLevel">Current Education Level</label>
+            <select id="educationLevel">
+              <option value="">Select Level</option>
+              <option value="matric">Matric (Grade 10)</option>
+              <option value="intermediate">
+                Intermediate (FSc / ICS / FA)
+              </option>
+              <option value="bachelor">
+                Bachelor (Currently in University)
+              </option>
+              <option value="master">Master</option>
+            </select>
+          </div>
+
+          <div class="step-nav">
+            <button class="btn btn-primary" onclick="goToStep(2)">
+              Next →
+            </button>
+          </div>
+          <div class="auth-link">
+            Already have an account? <a href="login.html">Login here</a>
+          </div>
+        </div>
+
+        <!-- ── STEP 2: Academic Background ── -->
+        <div id="step2" style="display: none">
+          <p class="step-title">
+            Step 2 of 4 — <span>Academic Background</span>
+          </p>
+
+          <div class="form-group">
+            <label for="previousQualification">Previous Qualification</label>
+            <select id="previousQualification">
+              <option value="">Select Qualification</option>
+              <option value="FSc Pre-Engineering">FSc Pre-Engineering</option>
+              <option value="FSc Pre-Medical">FSc Pre-Medical</option>
+              <option value="ICS (Computer Science)">
+                ICS (Computer Science)
+              </option>
+              <option value="ICS (Statistics)">ICS (Statistics)</option>
+              <option value="ICom">ICom (Commerce)</option>
+              <option value="FA (Arts)">FA (Arts)</option>
+              <option value="A-Levels">A-Levels</option>
+              <option value="O-Levels">O-Levels</option>
+              <option value="Matric Science">Matric Science</option>
+              <option value="Matric Arts">Matric Arts</option>
+              <option value="Bachelor">Already in Bachelor</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="majorStream">Major Stream</label>
+            <select id="majorStream">
+              <option value="">Select Stream</option>
+              <option value="science">Science</option>
+              <option value="commerce">Commerce</option>
+              <option value="arts">Arts / Humanities</option>
+              <option value="technology">Technology (ICS / IT)</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group register-interests">
+            <label>Subjects You Studied (select all)</label>
+            <div class="interest-grid" id="subjectsGrid">
+              <!-- Rendered by JS -->
             </div>
-            <div class="form-group">
-              <label for="semester">Current Semester</label>
-              <select id="semester">
-                <option value="">Select Semester</option>
-                <option value="1">Semester 1</option>
-                <option value="2">Semester 2</option>
-                <option value="3">Semester 3</option>
-                <option value="4">Semester 4</option>
-                <option value="5">Semester 5</option>
-                <option value="6">Semester 6</option>
-                <option value="7">Semester 7</option>
-                <option value="8">Semester 8</option>
-              </select>
+          </div>
+
+          <div class="form-group register-interests">
+            <label>Your Strong Subjects (select your best ones)</label>
+            <div class="interest-grid" id="strongSubjectsGrid">
+              <!-- Rendered by JS -->
             </div>
           </div>
 
           <div class="form-group">
-            <label for="skillLevel">Skill Level</label>
-            <select id="skillLevel">
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
+            <label for="gpa"
+              >GPA / Percentage (out of 4.0 or convert: 80% = 3.2)</label
+            >
+            <input
+              type="number"
+              id="gpa"
+              placeholder="3.2"
+              min="0"
+              max="4"
+              step="0.1"
+            />
           </div>
+
+          <div class="step-nav">
+            <button class="btn btn-secondary btn-auto" onclick="goToStep(1)">
+              ← Back
+            </button>
+            <button class="btn btn-primary" onclick="goToStep(3)">
+              Next →
+            </button>
+          </div>
+        </div>
+
+        <!-- ── STEP 3: Interests & Skills ── -->
+        <div id="step3" style="display: none">
+          <p class="step-title">
+            Step 3 of 4 — <span>Interests & Skills</span>
+          </p>
+
+          <div class="form-group register-interests">
+            <label>Interest Areas (select all that apply)</label>
+            <div class="interest-grid" id="interestAreasGrid"></div>
+          </div>
+
+          <div class="form-group register-interests">
+            <label>Preferred Activities (what do you enjoy doing?)</label>
+            <div class="interest-grid" id="activitiesGrid"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Analytical / Logical Thinking</label>
+            <div class="rating-group" id="analyticalGroup">
+              <button
+                class="rating-btn"
+                onclick="selectRating('analytical', 'low', this)"
+              >
+                🟡 Low
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('analytical', 'medium', this)"
+              >
+                🟠 Medium
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('analytical', 'high', this)"
+              >
+                🔴 High
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Communication Skills</label>
+            <div class="rating-group" id="communicationGroup">
+              <button
+                class="rating-btn"
+                onclick="selectRating('communication', 'low', this)"
+              >
+                🟡 Low
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('communication', 'medium', this)"
+              >
+                🟠 Medium
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('communication', 'high', this)"
+              >
+                🔴 High
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Creativity Level</label>
+            <div class="rating-group" id="creativityGroup">
+              <button
+                class="rating-btn"
+                onclick="selectRating('creativity', 'low', this)"
+              >
+                🟡 Low
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('creativity', 'medium', this)"
+              >
+                🟠 Medium
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('creativity', 'high', this)"
+              >
+                🔴 High
+              </button>
+            </div>
+          </div>
+
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label>Learning Preference</label>
+              <div class="rating-group" id="workPrefGroup">
+                <button
+                  class="rating-btn"
+                  onclick="selectRating('workPref', 'theory', this)"
+                >
+                  📚 Theory
+                </button>
+                <button
+                  class="rating-btn"
+                  onclick="selectRating('workPref', 'practical', this)"
+                >
+                  🔧 Practical
+                </button>
+                <button
+                  class="rating-btn"
+                  onclick="selectRating('workPref', 'both', this)"
+                >
+                  ⚡ Both
+                </button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Work Style</label>
+              <div class="rating-group" id="teamPrefGroup">
+                <button
+                  class="rating-btn"
+                  onclick="selectRating('teamPref', 'individual', this)"
+                >
+                  🧑 Solo
+                </button>
+                <button
+                  class="rating-btn"
+                  onclick="selectRating('teamPref', 'team', this)"
+                >
+                  👥 Team
+                </button>
+                <button
+                  class="rating-btn"
+                  onclick="selectRating('teamPref', 'both', this)"
+                >
+                  ⚡ Both
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <button class="btn btn-secondary btn-auto" onclick="goToStep(2)">
+              ← Back
+            </button>
+            <button class="btn btn-primary" onclick="goToStep(4)">
+              Next →
+            </button>
+          </div>
+        </div>
+
+        <!-- ── STEP 4: Career & Constraints ── -->
+        <div id="step4" style="display: none">
+          <p class="step-title">
+            Step 4 of 4 — <span>Career Goals & Preferences</span>
+          </p>
 
           <div class="form-group">
             <label for="careerGoal">Career Goal</label>
             <input
               type="text"
               id="careerGoal"
-              placeholder="Software Engineer, Data Scientist, Product Designer"
+              placeholder="e.g. Software Engineer, Doctor, Businessman, Lawyer"
             />
           </div>
 
-          <div class="form-group register-interests">
-            <label>Interests (select all that apply)</label>
-            <div class="tag-list tag-list-spaced">
-              <label class="interest-tag">
-                <input type="checkbox" value="Machine Learning" />
-                <span>Machine Learning</span>
-              </label>
-              <label class="interest-tag">
-                <input type="checkbox" value="Web Development" />
-                <span>Web Development</span>
-              </label>
-              <label class="interest-tag">
-                <input type="checkbox" value="Data Science" />
-                <span>Data Science</span>
-              </label>
-              <label class="interest-tag">
-                <input type="checkbox" value="Cybersecurity" />
-                <span>Cybersecurity</span>
-              </label>
-              <label class="interest-tag">
-                <input type="checkbox" value="Mobile Development" />
-                <span>Mobile Development</span>
-              </label>
-              <label class="interest-tag">
-                <input type="checkbox" value="AI" />
-                <span>Artificial Intelligence</span>
-              </label>
+          <div class="form-group">
+            <label>Preferred Work Environment</label>
+            <div class="rating-group" id="workEnvGroup">
+              <button
+                class="rating-btn"
+                onclick="selectRating('workEnv', 'office', this)"
+              >
+                🏢 Office
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('workEnv', 'field', this)"
+              >
+                🌍 Field
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('workEnv', 'remote', this)"
+              >
+                💻 Remote
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('workEnv', 'any', this)"
+              >
+                ⚡ Any
+              </button>
             </div>
           </div>
 
-          <button class="btn btn-primary" onclick="register()">
-            Create Account
-          </button>
+          <div class="form-group">
+            <label>Study Budget (per year)</label>
+            <div class="rating-group" id="budgetGroup">
+              <button
+                class="rating-btn"
+                onclick="selectRating('budget', 'low', this)"
+              >
+                💰 Low (Govt/Public)
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('budget', 'medium', this)"
+              >
+                💰💰 Medium
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('budget', 'high', this)"
+              >
+                💰💰💰 High (LUMS etc.)
+              </button>
+            </div>
+          </div>
 
-          <div class="auth-link">
-            Already have an account? <a href="/Course_Recommendation_System/frontend/pages/login.html">Login here</a>
+          <div class="form-group">
+            <label>Study Location Preference</label>
+            <div class="rating-group" id="locationGroup">
+              <button
+                class="rating-btn"
+                onclick="selectRating('studyLocation', 'local', this)"
+              >
+                🏠 Local City
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('studyLocation', 'abroad', this)"
+              >
+                ✈️ Abroad
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('studyLocation', 'online', this)"
+              >
+                💻 Online
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('studyLocation', 'any', this)"
+              >
+                ⚡ Any
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Do you need a scholarship?</label>
+            <div class="rating-group" id="scholarshipGroup">
+              <button
+                class="rating-btn"
+                onclick="selectRating('scholarship', 'yes', this)"
+              >
+                ✅ Yes
+              </button>
+              <button
+                class="rating-btn"
+                onclick="selectRating('scholarship', 'no', this)"
+              >
+                ❌ No
+              </button>
+            </div>
+          </div>
+
+          <div class="step-nav">
+            <button class="btn btn-secondary btn-auto" onclick="goToStep(3)">
+              ← Back
+            </button>
+            <button class="btn btn-primary" onclick="register()">
+              🚀 Create Account
+            </button>
           </div>
         </div>
       </div>
     </div>
 
     <script>
-      const API = 'https://courserecommendationsystem-production-0a2d.up.railway.app/api'
+      const API =
+        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
 
       if (localStorage.getItem('token')) {
         window.location.href = 'dashboard.html'
       }
 
+      // ── State ──────────────────────────────
+      const ratings = {
+        analytical: 'medium',
+        communication: 'medium',
+        creativity: 'medium',
+        workPref: 'both',
+        teamPref: 'both',
+        workEnv: 'any',
+        budget: 'medium',
+        studyLocation: 'any',
+        scholarship: 'no',
+      }
+
+      // ── Subject chips ──────────────────────
+      const allSubjects = [
+        { label: 'Mathematics', icon: '📐' },
+        { label: 'Physics', icon: '⚡' },
+        { label: 'Chemistry', icon: '🧪' },
+        { label: 'Biology', icon: '🧬' },
+        { label: 'Computer', icon: '💻' },
+        { label: 'Statistics', icon: '📊' },
+        { label: 'Economics', icon: '📈' },
+        { label: 'Accounting', icon: '🧾' },
+        { label: 'English', icon: '📝' },
+        { label: 'Urdu', icon: '✍️' },
+        { label: 'Islamiat', icon: '☪️' },
+        { label: 'Pakistan Studies', icon: '🇵🇰' },
+        { label: 'Sociology', icon: '👥' },
+        { label: 'Art', icon: '🎨' },
+      ]
+
+      const interestAreas = [
+        { label: 'Technology', icon: '💻' },
+        { label: 'Business', icon: '📈' },
+        { label: 'Healthcare', icon: '🏥' },
+        { label: 'Engineering', icon: '⚙️' },
+        { label: 'Arts & Media', icon: '🎨' },
+        { label: 'Law', icon: '⚖️' },
+        { label: 'Social Work', icon: '🤝' },
+        { label: 'Research', icon: '🔬' },
+        { label: 'Finance', icon: '💰' },
+        { label: 'Education', icon: '📚' },
+        { label: 'Environment', icon: '🌱' },
+        { label: 'Architecture', icon: '🏛️' },
+      ]
+
+      const activities = [
+        { label: 'Problem Solving', icon: '🧩' },
+        { label: 'Creativity', icon: '🎨' },
+        { label: 'Communication', icon: '🗣️' },
+        { label: 'Research', icon: '🔍' },
+        { label: 'Fieldwork', icon: '🌍' },
+        { label: 'Building Things', icon: '🔧' },
+        { label: 'Helping People', icon: '🤝' },
+        { label: 'Data Analysis', icon: '📊' },
+        { label: 'Leadership', icon: '👑' },
+        { label: 'Writing', icon: '✍️' },
+      ]
+
+      function renderChips(items, containerId, type) {
+        const container = document.getElementById(containerId)
+        container.innerHTML = ''
+        items.forEach((item) => {
+          const div = document.createElement('div')
+          div.className = 'interest-chip'
+          div.dataset.value = item.label
+          div.dataset.type = type
+          div.innerHTML = `<span class="chip-icon">${item.icon}</span><span>${item.label}</span>`
+          div.onclick = () => toggleChip(div)
+          container.appendChild(div)
+        })
+      }
+
+      function toggleChip(el) {
+        el.classList.toggle('selected')
+      }
+
+      function getSelectedChips(containerId) {
+        return Array.from(
+          document.querySelectorAll(`#${containerId} .interest-chip.selected`),
+        ).map((el) => el.dataset.value)
+      }
+
+      function selectRating(key, value, btn) {
+        ratings[key] = value
+        const group = btn.closest('.rating-group')
+        group
+          .querySelectorAll('.rating-btn')
+          .forEach((b) => b.classList.remove('selected'))
+        btn.classList.add('selected')
+      }
+
+      // ── Step Navigation ────────────────────
+      function goToStep(step) {
+        const errorAlert = document.getElementById('errorAlert')
+        errorAlert.style.display = 'none'
+
+        // Validate current step before moving
+        if (step === 2) {
+          const name = document.getElementById('name').value.trim()
+          const studentId = document.getElementById('studentId').value.trim()
+          const email = document.getElementById('email').value.trim()
+          const password = document.getElementById('password').value
+          const educationLevel = document.getElementById('educationLevel').value
+          if (!name || !studentId || !email || !password || !educationLevel) {
+            errorAlert.style.display = 'block'
+            errorAlert.textContent = 'Please fill in all fields.'
+            return
+          }
+          if (password.length < 6) {
+            errorAlert.style.display = 'block'
+            errorAlert.textContent = 'Password must be at least 6 characters.'
+            return
+          }
+        }
+
+        // Hide all steps
+        for (let i = 1; i <= 4; i++) {
+          document.getElementById(`step${i}`).style.display = 'none'
+          const dot = document.getElementById(`dot${i}`)
+          dot.classList.remove('active', 'done')
+          if (i < step) dot.classList.add('done')
+        }
+
+        document.getElementById(`step${step}`).style.display = 'block'
+        document.getElementById(`dot${step}`).classList.add('active')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+
+      // ── Register ───────────────────────────
       async function register() {
         const errorAlert = document.getElementById('errorAlert')
         const successAlert = document.getElementById('successAlert')
-
         errorAlert.style.display = 'none'
         successAlert.style.display = 'none'
 
-        const name = document.getElementById('name').value.trim()
-        const studentId = document.getElementById('studentId').value.trim()
-        const email = document.getElementById('email').value.trim()
-        const password = document.getElementById('password').value
-        const department = document.getElementById('department').value
-        const semester = document.getElementById('semester').value
-        const skillLevel = document.getElementById('skillLevel').value
         const careerGoal = document.getElementById('careerGoal').value.trim()
-
-        const interestCheckboxes = document.querySelectorAll(
-          '.interest-tag input[type="checkbox"]:checked',
-        )
-        const interests = Array.from(interestCheckboxes).map((cb) => cb.value)
-
-        if (
-          !name ||
-          !studentId ||
-          !email ||
-          !password ||
-          !department ||
-          !semester ||
-          !careerGoal
-        ) {
+        if (!careerGoal) {
           errorAlert.style.display = 'block'
-          errorAlert.textContent = 'Please fill in all fields.'
+          errorAlert.textContent = 'Please enter your career goal.'
           return
         }
 
-        if (password.length < 6) {
+        const interestAreas = getSelectedChips('interestAreasGrid')
+        if (interestAreas.length === 0) {
           errorAlert.style.display = 'block'
-          errorAlert.textContent = 'Password must be at least 6 characters.'
+          errorAlert.textContent =
+            'Please select at least one interest area (Step 3).'
           return
         }
 
-        if (interests.length === 0) {
-          errorAlert.style.display = 'block'
-          errorAlert.textContent = 'Please select at least one interest.'
-          return
+        const payload = {
+          name: document.getElementById('name').value.trim(),
+          studentId: document.getElementById('studentId').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value,
+          educationLevel: document.getElementById('educationLevel').value,
+          previousQualification: document.getElementById(
+            'previousQualification',
+          ).value,
+          majorStream:
+            document.getElementById('majorStream').value || 'science',
+          subjectsStudied: getSelectedChips('subjectsGrid'),
+          strongSubjects: getSelectedChips('strongSubjectsGrid'),
+          gpa: parseFloat(document.getElementById('gpa').value) || 0,
+          cgpa: parseFloat(document.getElementById('gpa').value) || 0,
+          interestAreas,
+          preferredActivities: getSelectedChips('activitiesGrid'),
+          analyticalSkills: ratings.analytical,
+          communicationSkills: ratings.communication,
+          creativityLevel: ratings.creativity,
+          workPreference: ratings.workPref,
+          teamPreference: ratings.teamPref,
+          careerGoal,
+          workEnvironment: ratings.workEnv,
+          budget: ratings.budget,
+          studyLocation: ratings.studyLocation,
+          needsScholarship: ratings.scholarship === 'yes',
+          // Legacy fields for backward compat
+          department: 'General',
+          semester: 1,
+          skillLevel: 'beginner',
+          interests: interestAreas,
         }
 
         try {
           const response = await fetch(`${API}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name,
-              studentId,
-              email,
-              password,
-              department,
-              semester: parseInt(semester, 10),
-              skillLevel,
-              careerGoal,
-              interests,
-            }),
+            body: JSON.stringify(payload),
           })
 
           const data = await response.json()
@@ -215,19 +768,26 @@
           localStorage.setItem('token', data.token)
           localStorage.setItem('studentName', data.name)
           localStorage.setItem('studentId', data._id)
+          localStorage.setItem('userRole', data.role)
 
           successAlert.style.display = 'block'
           successAlert.textContent =
-            'Account created successfully. Redirecting...'
+            'Account created! Redirecting to your recommendations...'
 
           setTimeout(() => {
-            window.location.href = 'dashboard.html'
+            window.location.href = 'recommendations.html'
           }, 1200)
         } catch (error) {
           errorAlert.style.display = 'block'
-          errorAlert.textContent = 'Server error. Make sure backend is running.'
+          errorAlert.textContent = 'Server error. Please try again.'
         }
       }
+
+      // ── Init ───────────────────────────────
+      renderChips(allSubjects, 'subjectsGrid', 'subject')
+      renderChips(allSubjects, 'strongSubjectsGrid', 'strong')
+      renderChips(interestAreas, 'interestAreasGrid', 'interest')
+      renderChips(activities, 'activitiesGrid', 'activity')
     </script>
   </body>
 </html>

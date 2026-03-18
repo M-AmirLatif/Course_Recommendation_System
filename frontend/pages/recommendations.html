@@ -3,9 +3,326 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recommendations - Course Recommender</title>
+    <title>Degree Recommendations</title>
     <link rel="stylesheet" href="../css/style.css" />
     <style>
+      .rec-card {
+        background: linear-gradient(
+          155deg,
+          rgba(11, 23, 49, 0.85),
+          rgba(24, 41, 71, 0.65)
+        );
+        border: 1px solid rgba(133, 158, 196, 0.25);
+        border-radius: 18px;
+        padding: 24px;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s ease;
+      }
+      .rec-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #60a5fa, #22d3ee);
+      }
+      .rec-card:hover {
+        transform: translateX(4px);
+        border-color: rgba(96, 165, 250, 0.45);
+        box-shadow: 0 14px 32px rgba(2, 8, 28, 0.4);
+      }
+      .rec-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+      .rec-rank {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Poppins', sans-serif;
+        font-size: 22px;
+        font-weight: 800;
+        color: #eef5ff;
+        background: linear-gradient(
+          145deg,
+          rgba(59, 130, 246, 0.35),
+          rgba(99, 102, 241, 0.28)
+        );
+        border: 1px solid rgba(96, 165, 250, 0.4);
+        flex-shrink: 0;
+      }
+      .rec-rank.gold {
+        background: linear-gradient(
+          145deg,
+          rgba(245, 158, 11, 0.4),
+          rgba(234, 88, 12, 0.3)
+        );
+        border-color: rgba(245, 158, 11, 0.5);
+      }
+      .rec-rank.silver {
+        background: linear-gradient(
+          145deg,
+          rgba(148, 163, 184, 0.4),
+          rgba(100, 116, 139, 0.3)
+        );
+        border-color: rgba(148, 163, 184, 0.5);
+      }
+      .rec-rank.bronze {
+        background: linear-gradient(
+          145deg,
+          rgba(180, 120, 60, 0.4),
+          rgba(146, 96, 44, 0.3)
+        );
+        border-color: rgba(180, 120, 60, 0.5);
+      }
+      .rec-degree-name {
+        font-family: 'Poppins', sans-serif;
+        font-size: 19px;
+        font-weight: 700;
+        color: #f3f8ff;
+        margin-bottom: 4px;
+        letter-spacing: -0.3px;
+      }
+      .rec-field-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        background: rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        color: #93c5fd;
+        margin-right: 8px;
+      }
+      .match-bar-wrap {
+        margin: 14px 0;
+      }
+      .match-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .match-label span:first-child {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+      .match-pct {
+        font-family: 'Poppins', sans-serif;
+        font-size: 18px;
+        font-weight: 800;
+        color: #60a5fa;
+      }
+      .match-pct.excellent {
+        color: #10b981;
+      }
+      .match-pct.strong {
+        color: #60a5fa;
+      }
+      .match-pct.good {
+        color: #f59e0b;
+      }
+      .match-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+      .match-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #3b82f6, #22d3ee);
+        transition: width 1s ease;
+      }
+      .match-bar-fill.excellent {
+        background: linear-gradient(90deg, #10b981, #34d399);
+      }
+      .match-bar-fill.strong {
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      }
+      .match-bar-fill.good {
+        background: linear-gradient(90deg, #f59e0b, #fcd34d);
+      }
+      .conf-badge {
+        display: inline-flex;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+      }
+      .conf-badge.excellent {
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .conf-badge.strong {
+        background: rgba(59, 130, 246, 0.15);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+      .conf-badge.good {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fcd34d;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+      .conf-badge.possible {
+        background: rgba(148, 163, 184, 0.1);
+        color: #cbd5e1;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .why-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 10px 0;
+      }
+      .why-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 5px 11px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #bfdbfe;
+        border: 1px solid rgba(96, 165, 250, 0.28);
+        background: rgba(37, 99, 235, 0.13);
+      }
+      .breakdown-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .bd-item {
+        text-align: center;
+        padding: 8px 4px;
+        border-radius: 8px;
+        background: rgba(148, 163, 184, 0.06);
+        border: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      .bd-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin-bottom: 4px;
+      }
+      .bd-val {
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: #93c5fd;
+      }
+      .uni-section {
+        margin-top: 16px;
+        border-top: 1px solid rgba(148, 163, 184, 0.15);
+        padding-top: 14px;
+      }
+      .section-lbl {
+        font-family: 'Poppins', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+      }
+      .uni-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: rgba(148, 163, 184, 0.06);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .uni-name {
+        font-weight: 700;
+        font-size: 14px;
+        color: #e2eeff;
+      }
+      .uni-loc {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .uni-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .uni-fee {
+        font-size: 12px;
+        font-weight: 600;
+        color: #fcd34d;
+      }
+      .badge-green {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .badge-gray {
+        font-size: 11px;
+        font-weight: 600;
+        color: #94a3b8;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.1);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .career-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .career-chip {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(139, 92, 246, 0.12);
+        color: #c4b5fd;
+        border: 1px solid rgba(139, 92, 246, 0.25);
+      }
+      .salary-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(16, 185, 129, 0.12);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        margin-top: 8px;
+      }
       .nav-toggle {
         display: none;
         flex-direction: column;
@@ -19,7 +336,6 @@
         border-radius: 8px;
         cursor: pointer;
         padding: 8px;
-        z-index: 200;
       }
       .nav-toggle span {
         display: block;
@@ -27,7 +343,7 @@
         height: 2px;
         background: #f1f5f9;
         border-radius: 2px;
-        transition: all 0.3s ease;
+        transition: all 0.3s;
       }
       .nav-toggle.open span:nth-child(1) {
         transform: translateY(7px) rotate(45deg);
@@ -43,8 +359,6 @@
           flex-wrap: wrap;
           height: auto !important;
           padding: 14px 20px !important;
-          gap: 0;
-          position: relative;
         }
         .nav-toggle {
           display: flex;
@@ -55,9 +369,6 @@
           width: 100%;
           gap: 4px !important;
           padding: 12px 0 4px;
-          align-items: flex-start !important;
-          flex-wrap: nowrap !important;
-          justify-content: flex-start !important;
         }
         .nav-links.open {
           display: flex;
@@ -74,6 +385,15 @@
           padding: 6px 14px;
           font-size: 13px;
           color: #94a3b8;
+        }
+        .breakdown-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .rec-degree-name {
+          font-size: 16px;
+        }
+        .match-pct {
+          font-size: 15px;
         }
       }
     </style>
@@ -93,7 +413,7 @@
 
     <div class="dashboard content-stack">
       <div class="page-header">
-        <h1>AI Course Recommendations</h1>
+        <h1>🎓 Degree Recommendations</h1>
         <p class="subtitle" id="subtitleMsg">Analyzing your profile...</p>
       </div>
 
@@ -104,253 +424,139 @@
             <p id="careerGoal">-</p>
           </div>
           <div class="summary-item">
-            <label>Interests</label>
+            <label>Interest Areas</label>
             <div id="interestTags" class="tag-list"></div>
           </div>
           <div class="summary-item">
-            <label>Courses Analyzed</label>
+            <label>Degrees Analyzed</label>
             <p id="totalAnalyzed">-</p>
           </div>
         </div>
       </section>
 
       <section class="glass-panel rec-results-panel">
-        <h2>Recommended For You</h2>
+        <h2>Best Degrees For You</h2>
         <div id="recommendationsList">
-          <p class="empty-text">Loading recommendations...</p>
+          <div class="loading-box">
+            <div class="loading-emoji">🤖</div>
+            <p>Analyzing your academic profile...</p>
+          </div>
         </div>
       </section>
     </div>
 
     <script>
       const API =
-        'https://courserecommendationsystem-production-0a2d.up.railway.app/api'
+        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
       const token = localStorage.getItem('token')
-
-      if (!token) {
-        window.location.href = 'login.html'
-      }
-
+      if (!token) window.location.href = 'login.html'
       const headers = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       }
-
       document.getElementById('navName').textContent =
-        localStorage.getItem('studentName')
+        localStorage.getItem('studentName') || ''
+
+      function toggleNav() {
+        document.getElementById('navLinks').classList.toggle('open')
+        document.querySelector('.nav-toggle').classList.toggle('open')
+      }
+      function getMatchClass(p) {
+        return p >= 80
+          ? 'excellent'
+          : p >= 65
+            ? 'strong'
+            : p >= 50
+              ? 'good'
+              : ''
+      }
+      function getConfClass(l) {
+        if (l === 'Excellent Match') return 'excellent'
+        if (l === 'Strong Match') return 'strong'
+        if (l === 'Good Match') return 'good'
+        return 'possible'
+      }
+      function getRankClass(r) {
+        return r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : ''
+      }
 
       window.onload = async () => {
-        await loadRecommendations()
-      }
-
-      function difficultyClass(value) {
-        if (value === 'beginner') return 'diff-beginner'
-        if (value === 'intermediate') return 'diff-intermediate'
-        return 'diff-advanced'
-      }
-
-      function difficultyLabel(value) {
-        return (value || '').charAt(0).toUpperCase() + (value || '').slice(1)
-      }
-
-      async function loadRecommendations() {
-        document.getElementById('recommendationsList').innerHTML = `
-          <div class="loading-box">
-            <div class="loading-emoji">AI</div>
-            <p>Analyzing your profile...</p>
-          </div>
-        `
-
         try {
           const res = await fetch(`${API}/recommendations`, { headers })
           const data = await res.json()
-
           document.getElementById('subtitleMsg').textContent =
-            `Personalized recommendations for ${data.student}`
-          document.getElementById('careerGoal').textContent = data.careerGoal
+            `Personalized degree recommendations for ${data.student}`
+          document.getElementById('careerGoal').textContent =
+            data.careerGoal || 'Not specified'
           document.getElementById('totalAnalyzed').textContent =
-            `${data.totalCoursesAnalyzed} courses`
-
-          const tagsDiv = document.getElementById('interestTags')
-          tagsDiv.innerHTML = ''
-          const interests = data.interests || []
-          interests.forEach((interest) => {
-            tagsDiv.innerHTML += `<span class="tag">${interest}</span>`
+            `${data.totalDegreesAnalyzed} degrees`
+          ;(data.interestAreas || []).forEach((a) => {
+            document.getElementById('interestTags').innerHTML +=
+              `<span class="tag">${a}</span>`
           })
-
           const list = document.getElementById('recommendationsList')
-
-          if (data.recommendations.length === 0) {
-            list.innerHTML = `
-              <p class="empty-text">
-                No recommendations available yet. Update your profile with interests and career goals.
-              </p>
-            `
+          if (!data.recommendations || data.recommendations.length === 0) {
+            list.innerHTML =
+              '<div class="empty-text"><p>No degree recommendations yet. Admin needs to add degrees to the system.</p></div>'
             return
           }
-
           list.innerHTML = ''
           data.recommendations.forEach((rec) => {
-            const medal =
-              rec.rank === 1
-                ? '1'
-                : rec.rank === 2
-                  ? '2'
-                  : rec.rank === 3
-                    ? '3'
-                    : `#${rec.rank}`
-
-            const reasonTags = (rec.whyRecommended || [])
-              .map((reason) => `<span class="reason-tag">${reason}</span>`)
+            const mc = getMatchClass(rec.matchPercentage),
+              cc = getConfClass(rec.confidenceLabel),
+              rc = getRankClass(rec.rank)
+            const whyTags = (rec.whyRecommended || [])
+              .map((r) => `<span class="why-tag">✓ ${r}</span>`)
               .join('')
-
-            list.innerHTML += `
-              <div class="rec-card">
-                <div class="rank">${medal}</div>
-                <div class="course-info">
-                  <h3>${rec.title}</h3>
-                  <div class="course-meta">
-                    <span><strong>${rec.courseCode}</strong></span>
-                    <span class="${difficultyClass(rec.difficulty)}">${difficultyLabel(rec.difficulty)}</span>
-                    <span>Rating ${rec.rating}/5</span>
-                    <span>Success ${rec.successRate}%</span>
-                    <span>Probability ${rec.successProbability}%</span>
-                  </div>
-                  <div class="reasons">${reasonTags}</div>
-                </div>
-                <div class="actions">
-                  <div class="score-badge">Score ${rec.score}</div>
-                  <button class="btn-enroll" onclick="enrollCourse('${rec.courseCode}')">Enroll</button>
-                  <div class="feedback-btns">
-                    <button
-                      class="btn-like"
-                      onclick="sendFeedback('${rec.courseCode}', 'like')"
-                      id="like-${rec.courseCode}"
-                    >
-                      Like
-                    </button>
-                    <button
-                      class="btn-dislike"
-                      onclick="sendFeedback('${rec.courseCode}', 'dislike')"
-                      id="dislike-${rec.courseCode}"
-                    >
-                      Dislike
-                    </button>
+            const unis = (rec.universities || [])
+              .slice(0, 4)
+              .map(
+                (u) =>
+                  `<div class="uni-item"><div><p class="uni-name">${u.name}</p><p class="uni-loc">📍 ${u.location}</p></div><div class="uni-meta">${u.feePerYear ? `<span class="uni-fee">${u.feePerYear}/yr</span>` : ''} ${u.hasScholarship ? `<span class="badge-green">🎓 Scholarship</span>` : ''} ${u.admissionTest && u.admissionTest !== 'None' ? `<span class="badge-gray">📝 ${u.admissionTest}</span>` : ''}</div></div>`,
+              )
+              .join('')
+            const careers = (rec.careerOutcomes || [])
+              .slice(0, 5)
+              .map((c) => `<span class="career-chip">${c}</span>`)
+              .join('')
+            const bd = rec.breakdown || {}
+            list.innerHTML += `<div class="rec-card">
+              <div class="rec-header">
+                <div class="rec-rank ${rc}">${rec.rank}</div>
+                <div style="flex:1;min-width:0">
+                  <p class="rec-degree-name">${rec.name}</p>
+                  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:4px">
+                    <span class="rec-field-badge">${rec.field}</span>
+                    <span style="font-size:12px;color:var(--text-muted)">⏱ ${rec.duration || '4 years'}</span>
+                    <span class="conf-badge ${cc}">${rec.confidenceLabel}</span>
                   </div>
                 </div>
               </div>
-            `
+              <div class="match-bar-wrap">
+                <div class="match-label"><span>Match Score</span><span class="match-pct ${mc}">${rec.matchPercentage}%</span></div>
+                <div class="match-bar"><div class="match-bar-fill ${mc}" style="width:${rec.matchPercentage}%"></div></div>
+              </div>
+              ${whyTags ? `<div class="why-list">${whyTags}</div>` : ''}
+              <div class="breakdown-grid">
+                <div class="bd-item"><p class="bd-label">Academic</p><p class="bd-val">${bd.academic || '-'}</p></div>
+                <div class="bd-item"><p class="bd-label">Interests</p><p class="bd-val">${bd.interests || '-'}</p></div>
+                <div class="bd-item"><p class="bd-label">Skills</p><p class="bd-val">${bd.skills || '-'}</p></div>
+                <div class="bd-item"><p class="bd-label">Career</p><p class="bd-val">${bd.career || '-'}</p></div>
+                <div class="bd-item"><p class="bd-label">Budget</p><p class="bd-val">${bd.constraints || '-'}</p></div>
+              </div>
+              <div style="margin-top:14px">
+                <p class="section-lbl">Career Outcomes</p>
+                <div class="career-chips">${careers}</div>
+                ${rec.expectedSalary ? `<div class="salary-badge">💰 ${rec.expectedSalary}</div>` : ''}
+              </div>
+              ${unis ? `<div class="uni-section"><p class="section-lbl">🏛️ Top Universities in Pakistan</p>${unis}</div>` : ''}
+            </div>`
           })
-        } catch (error) {
+        } catch (e) {
           document.getElementById('recommendationsList').innerHTML =
-            '<p class="error-text">Error loading recommendations. Make sure backend is running.</p>'
+            '<p class="error-text">Error loading recommendations. Please try again.</p>'
         }
       }
-
-      async function enrollCourse(courseCode) {
-        const coursesRes = await fetch(`${API}/courses`, { headers })
-        const courses = await coursesRes.json()
-        const course = courses.find((c) => c.courseCode === courseCode)
-
-        if (!course) return alert('Course not found.')
-
-        const res = await fetch(`${API}/enrollments`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            courseId: course._id,
-            semester: 5,
-            academicYear: '2025-2026',
-          }),
-        })
-
-        const data = await res.json()
-
-        if (res.ok) {
-          alert(`Successfully enrolled in ${course.title}.`)
-          loadRecommendations()
-        } else {
-          alert(data.message)
-        }
-      }
-
-      async function sendFeedback(courseCode, type) {
-        const coursesRes = await fetch(`${API}/courses`, { headers })
-        const courses = await coursesRes.json()
-        const course = courses.find((c) => c.courseCode === courseCode)
-        if (!course) return
-
-        const prefRes = await fetch(`${API}/preferences`, { headers })
-
-        let res
-        if (prefRes.ok) {
-          const pref = await prefRes.json()
-
-          let likedCourses = pref.likedCourses || []
-          let dislikedCourses = pref.dislikedCourses || []
-
-          if (type === 'like') {
-            if (!likedCourses.includes(course._id)) {
-              likedCourses.push(course._id)
-            }
-            dislikedCourses = dislikedCourses.filter((id) => id !== course._id)
-          } else {
-            if (!dislikedCourses.includes(course._id)) {
-              dislikedCourses.push(course._id)
-            }
-            likedCourses = likedCourses.filter((id) => id !== course._id)
-          }
-
-          res = await fetch(`${API}/preferences`, {
-            method: 'PUT',
-            headers,
-            body: JSON.stringify({ likedCourses, dislikedCourses }),
-          })
-        } else {
-          res = await fetch(`${API}/preferences`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              likedCourses: type === 'like' ? [course._id] : [],
-              dislikedCourses: type === 'dislike' ? [course._id] : [],
-            }),
-          })
-        }
-
-        if (res.ok) {
-          const likeBtn = document.getElementById(`like-${courseCode}`)
-          const dislikeBtn = document.getElementById(`dislike-${courseCode}`)
-
-          if (type === 'like') {
-            likeBtn.textContent = 'Liked'
-            dislikeBtn.textContent = 'Dislike'
-          } else {
-            dislikeBtn.textContent = 'Disliked'
-            likeBtn.textContent = 'Like'
-          }
-
-          setTimeout(() => {
-            loadRecommendations()
-          }, 1000)
-        }
-      }
-
-      function toggleNav() {
-        const nav = document.getElementById('navLinks')
-        const btn = document.querySelector('.nav-toggle')
-        nav.classList.toggle('open')
-        btn.classList.toggle('open')
-      }
-      // Close nav when clicking outside
-      document.addEventListener('click', function (e) {
-        const nav = document.getElementById('navLinks')
-        const btn = document.querySelector('.nav-toggle')
-        if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
-          nav.classList.remove('open')
-          btn.classList.remove('open')
-        }
-      })
-
       function logout() {
         localStorage.removeItem('token')
         localStorage.removeItem('studentName')

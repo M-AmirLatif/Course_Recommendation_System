@@ -1,63 +1,57 @@
 const Student = require('../models/Student')
-const Course = require('../models/Course')
-const Enrollment = require('../models/Enrollment')
-const Grade = require('../models/Grade')
-const Preference = require('../models/Preference')
-const recommendCourses = require('../utils/recommendationEngine')
+const Degree = require('../models/Degree')
+const recommendDegrees = require('../utils/recommendationEngine')
 
 const getRecommendations = async (req, res) => {
   try {
-    const student = await Student.findById(req.student._id)
-    const courses = await Course.find({ isActive: true })
+    const student = await Student.findById(req.user.id)
+    if (!student) return res.status(404).json({ message: 'Student not found' })
 
-    const enrollments = await Enrollment.find({ student: req.student._id })
-    const enrolledCourseIds = enrollments.map((e) => e.course.toString())
+    // Get all active degrees
+    const degrees = await Degree.find({ isActive: true })
 
-    const grades = await Grade.find({
-      student: req.student._id,
-    }).populate('course', 'tags title')
+    if (degrees.length === 0) {
+      return res.json({
+        student: student.name,
+        careerGoal: student.careerGoal,
+        interestAreas: student.interestAreas || [],
+        totalDegreesAnalyzed: 0,
+        recommendations: [],
+        message: 'No degrees in database yet. Admin needs to add degrees.',
+      })
+    }
 
-    const preferences = await Preference.findOne({
-      student: req.student._id,
-    })
-
-    // NEW — get all students and enrollments for collaborative filtering
-    const allStudents = await Student.find({ role: 'student' })
-    const allEnrollments = await Enrollment.find({ status: 'completed' })
-
-    // Run engine with collaborative filtering
-    const recommendations = recommendCourses(
-      student,
-      courses,
-      enrolledCourseIds,
-      grades,
-      preferences,
-      allStudents,
-      allEnrollments,
-    )
-
-    const top5 = recommendations.slice(0, 5)
+    // Run recommendation engine
+    const recommendations = recommendDegrees(student, degrees)
 
     res.json({
       student: student.name,
-      careerGoal: student.careerGoal,
-      interests: student.interests,
-      cgpa: student.cgpa,
-      totalCoursesAnalyzed: courses.length,
-      recommendations: top5.map((item, index) => ({
+      careerGoal: student.careerGoal || 'Not specified',
+      interestAreas: student.interestAreas || [],
+      majorStream: student.majorStream,
+      totalDegreesAnalyzed: degrees.length,
+      recommendations: recommendations.slice(0, 8).map((rec, index) => ({
         rank: index + 1,
-        courseCode: item.course.courseCode,
-        title: item.course.title,
-        difficulty: item.course.difficultyLevel,
-        successRate: item.course.successRate,
-        rating: item.course.averageRating,
-        score: item.score,
-        successProbability: item.successProbability,
-        whyRecommended: item.reasons,
+        degreeId: rec.degree._id,
+        name: rec.degree.name,
+        shortName: rec.degree.shortName,
+        field: rec.degree.field,
+        duration: rec.degree.duration,
+        description: rec.degree.description,
+        matchPercentage: rec.matchPercentage,
+        confidenceLabel: rec.confidenceLabel,
+        whyRecommended: rec.reasons,
+        breakdown: rec.breakdown,
+        universities: rec.degree.universities || [],
+        careerOutcomes: rec.degree.careerOutcomes || [],
+        expectedSalary: rec.degree.expectedSalary,
+        jobMarket: rec.degree.jobMarket,
+        successRate: rec.degree.successRate,
       })),
     })
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    console.error('Recommendation error:', error)
+    res.status(500).json({ message: 'Error generating recommendations' })
   }
 }
 

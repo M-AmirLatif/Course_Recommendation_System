@@ -2,72 +2,133 @@ const mongoose = require('mongoose')
 
 const studentSchema = new mongoose.Schema(
   {
-    // Basic login info
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
+    // ── BASIC INFO ─────────────────────────────
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
+    password: { type: String, required: true },
+    studentId: { type: String, required: true, unique: true },
+    role: { type: String, enum: ['student', 'admin'], default: 'student' },
 
-    // Academic info
-    studentId: {
+    // ── ACADEMIC BACKGROUND ────────────────────
+    educationLevel: {
       type: String,
-      required: true,
-      unique: true,
+      enum: ['matric', 'intermediate', 'bachelor', 'master'],
+      default: 'intermediate',
     },
-    department: {
+    previousQualification: {
       type: String,
-      required: true,
-      // e.g. "Computer Science", "Business", "Engineering"
+      // e.g. "FSc Pre-Engineering", "ICS", "A-Levels", "O-Levels", "BCom"
     },
-    semester: {
+    majorStream: {
+      type: String,
+      enum: ['science', 'commerce', 'arts', 'technology', 'other'],
+      default: 'science',
+    },
+    subjectsStudied: [
+      {
+        type: String,
+        // e.g. ["Mathematics", "Physics", "Computer", "Biology", "Chemistry"]
+      },
+    ],
+    strongSubjects: [
+      {
+        type: String,
+        // subjects student is strong in
+      },
+    ],
+    gpa: {
       type: Number,
-      required: true,
-      // e.g. 1 to 8
+      min: 0,
+      max: 4,
+      default: 0,
     },
+    // Keep cgpa for backward compatibility
     cgpa: {
       type: Number,
       min: 0,
       max: 4,
       default: 0,
-      // overall GPA, used by recommendation engine
     },
 
-    // Interests & career goals (used by AI engine)
-    interests: [
+    // ── INTERESTS ──────────────────────────────
+    interestAreas: [
       {
         type: String,
-        // e.g. ["Machine Learning", "Web Dev", "Data Science"]
+        // e.g. ["Technology", "Business", "Healthcare", "Arts", "Law", "Engineering"]
       },
     ],
+    preferredActivities: [
+      {
+        type: String,
+        // e.g. ["Problem Solving", "Creativity", "Communication", "Research", "Fieldwork"]
+      },
+    ],
+
+    // ── SKILLS & PERSONALITY ───────────────────
+    analyticalSkills: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'medium',
+    },
+    communicationSkills: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'medium',
+    },
+    creativityLevel: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'medium',
+    },
+    workPreference: {
+      type: String,
+      enum: ['theory', 'practical', 'both'],
+      default: 'both',
+    },
+    teamPreference: {
+      type: String,
+      enum: ['team', 'individual', 'both'],
+      default: 'both',
+    },
+
+    // ── CAREER GOALS ───────────────────────────
     careerGoal: {
       type: String,
-      // e.g. "Software Engineer", "Data Analyst", "Entrepreneur"
+      // e.g. "Software Engineer", "Doctor", "Businessman", "Designer"
     },
+    workEnvironment: {
+      type: String,
+      enum: ['office', 'field', 'remote', 'any'],
+      default: 'any',
+    },
+
+    // ── CONSTRAINTS ────────────────────────────
+    budget: {
+      type: String,
+      enum: ['low', 'medium', 'high'],
+      default: 'medium',
+    },
+    studyLocation: {
+      type: String,
+      enum: ['local', 'abroad', 'online', 'any'],
+      default: 'any',
+    },
+    needsScholarship: {
+      type: Boolean,
+      default: false,
+    },
+
+    // ── LEGACY FIELDS (kept for compatibility) ─
+    department: { type: String, default: 'General' },
+    semester: { type: Number, default: 1 },
     skillLevel: {
       type: String,
       enum: ['beginner', 'intermediate', 'advanced'],
       default: 'beginner',
     },
-
-    role: {
-      type: String,
-      enum: ['student', 'admin'],
-      default: 'student',
-    },
+    interests: [{ type: String }],
   },
   { timestamps: true },
 )
-// timestamps automatically adds createdAt and updatedAt
 
 module.exports = mongoose.model('Student', studentSchema)

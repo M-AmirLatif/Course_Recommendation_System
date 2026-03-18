@@ -1,312 +1,321 @@
-// ─────────────────────────────────────────
-// COLLABORATIVE FILTERING HELPER
-// Finds similar students based on interests
-// and career goals
-// ─────────────────────────────────────────
-const findSimilarStudents = (currentStudent, allStudents) => {
-  const similarStudents = allStudents
-    .filter((s) => s._id.toString() !== currentStudent._id.toString())
-    .map((student) => {
-      let similarityScore = 0
+// ═══════════════════════════════════════════════════════
+//  DEGREE RECOMMENDATION ENGINE
+//  Weighted scoring system:
+//    Academic Match  → 40%
+//    Interests       → 30%
+//    Skills          → 15%
+//    Career Goals    → 10%
+//    Constraints     → 5%
+// ═══════════════════════════════════════════════════════
 
-      // Compare interests
-      const commonInterests = currentStudent.interests.filter((interest) =>
-        student.interests.some(
-          (si) => si.toLowerCase() === interest.toLowerCase(),
-        ),
-      )
-      similarityScore += commonInterests.length * 20
-
-      // Compare career goals
-      if (student.careerGoal && currentStudent.careerGoal) {
-        if (
-          student.careerGoal.toLowerCase() ===
-          currentStudent.careerGoal.toLowerCase()
-        ) {
-          similarityScore += 30
-        }
-      }
-
-      // Compare skill level
-      if (student.skillLevel === currentStudent.skillLevel) {
-        similarityScore += 10
-      }
-
-      // Compare department
-      if (student.department === currentStudent.department) {
-        similarityScore += 15
-      }
-
-      return { student, similarityScore }
-    })
-    .filter((item) => item.similarityScore > 0)
-    .sort((a, b) => b.similarityScore - a.similarityScore)
-    .slice(0, 5) // top 5 similar students
-
-  return similarStudents
+// ── HELPER: Check if arrays share any values ──────────
+const hasOverlap = (arr1 = [], arr2 = []) => {
+  return arr1.some((a) =>
+    arr2.some(
+      (b) =>
+        a.toLowerCase().includes(b.toLowerCase()) ||
+        b.toLowerCase().includes(a.toLowerCase()),
+    ),
+  )
 }
 
-// ─────────────────────────────────────────
-// PREDICTIVE MODELING
-// Estimates success probability for a course
-// based on student's historical performance
-// ─────────────────────────────────────────
-const predictSuccessProbability = (student, course, grades) => {
-  let probability = 50 // base 50%
+const countOverlap = (arr1 = [], arr2 = []) => {
+  return arr1.filter((a) =>
+    arr2.some(
+      (b) =>
+        a.toLowerCase().includes(b.toLowerCase()) ||
+        b.toLowerCase().includes(a.toLowerCase()),
+    ),
+  ).length
+}
 
-  // Factor 1: CGPA impact
-  if (student.cgpa >= 3.5) probability += 20
-  else if (student.cgpa >= 3.0) probability += 15
-  else if (student.cgpa >= 2.5) probability += 10
-  else if (student.cgpa >= 2.0) probability += 5
-  else probability -= 10
+// ── 1. ACADEMIC MATCH (40 points max) ─────────────────
+const scoreAcademic = (student, degree) => {
+  let score = 0
+  const reasons = []
 
-  // Factor 2: Skill level vs difficulty match
-  if (course.difficultyLevel === student.skillLevel) {
-    probability += 15
-  } else if (
-    (student.skillLevel === 'advanced' &&
-      course.difficultyLevel === 'intermediate') ||
-    (student.skillLevel === 'intermediate' &&
-      course.difficultyLevel === 'beginner')
+  // Stream match (15 points)
+  if (
+    degree.requiredStream.includes('any') ||
+    degree.requiredStream.length === 0
   ) {
-    probability += 20 // easier than skill level = high chance
-  } else if (
-    student.skillLevel === 'beginner' &&
-    course.difficultyLevel === 'advanced'
-  ) {
-    probability -= 20 // too hard
+    score += 10
+  } else if (degree.requiredStream.includes(student.majorStream)) {
+    score += 15
+    reasons.push(`Your ${student.majorStream} stream matches this degree`)
+  } else {
+    score -= 10 // wrong stream
   }
 
-  // Factor 3: Past performance in similar courses
-  if (grades && grades.length > 0) {
-    const similarGrades = grades.filter((g) => {
-      const courseTags = g.course.tags || []
-      return courseTags.some((tag) => course.tags.includes(tag))
-    })
+  // Required subjects match (15 points)
+  if (degree.requiredSubjects && degree.requiredSubjects.length > 0) {
+    const subjectMatch = countOverlap(
+      student.subjectsStudied || [],
+      degree.requiredSubjects,
+    )
+    const matchRatio = subjectMatch / degree.requiredSubjects.length
+    const subjectScore = Math.round(matchRatio * 15)
+    score += subjectScore
+    if (subjectScore >= 10) {
+      reasons.push(
+        `You have studied ${subjectMatch}/${degree.requiredSubjects.length} required subjects`,
+      )
+    }
+  } else {
+    score += 10 // no specific requirements
+  }
 
-    if (similarGrades.length > 0) {
-      const avgGradePoints =
-        similarGrades.reduce((sum, g) => sum + g.gradePoints, 0) /
-        similarGrades.length
-
-      if (avgGradePoints >= 3.5) probability += 15
-      else if (avgGradePoints >= 3.0) probability += 10
-      else if (avgGradePoints >= 2.0) probability += 5
-      else probability -= 10
+  // Strong subjects bonus (10 points)
+  if (student.strongSubjects && student.strongSubjects.length > 0) {
+    const strongMatch = countOverlap(
+      student.strongSubjects,
+      degree.requiredSubjects || [],
+    )
+    if (strongMatch > 0) {
+      score += Math.min(strongMatch * 5, 10)
+      reasons.push(`You are strong in key subjects for this degree`)
     }
   }
 
-  // Factor 4: Course success rate
-  if (course.successRate >= 85) probability += 10
-  else if (course.successRate >= 70) probability += 5
-  else probability -= 5
+  // GPA / grade bonus
+  const gpa = student.gpa || student.cgpa || 0
+  if (gpa >= 3.5) score += 5
+  else if (gpa >= 3.0) score += 3
+  else if (gpa >= 2.5) score += 1
+  else if (gpa < degree.minGPA) score -= 5
 
-  // Clamp between 10% and 99%
-  return Math.min(99, Math.max(10, Math.round(probability)))
+  return { score: Math.max(0, Math.min(score, 40)), reasons }
 }
 
-const recommendCourses = (
-  student,
-  courses,
-  enrolledCourseIds,
-  grades,
-  preferences,
-  allStudents, // NEW
-  allEnrollments, // NEW
-) => {
-  const scoredCourses = courses.map((course) => {
-    let score = 0
-    let reasons = []
+// ── 2. INTEREST MATCH (30 points max) ─────────────────
+const scoreInterests = (student, degree) => {
+  let score = 0
+  const reasons = []
 
-    // ── 1. INTEREST MATCHING ──────────────────
-    const interestMatches = student.interests.filter((interest) =>
-      course.tags.some(
-        (tag) =>
-          tag.toLowerCase().includes(interest.toLowerCase()) ||
-          interest.toLowerCase().includes(tag.toLowerCase()),
+  // Interest area match (20 points)
+  const interestMatch = countOverlap(
+    student.interestAreas || [],
+    degree.idealInterestAreas || [],
+  )
+  if (interestMatch > 0) {
+    const interestScore = Math.min(interestMatch * 7, 20)
+    score += interestScore
+    const matched = (student.interestAreas || []).filter((a) =>
+      (degree.idealInterestAreas || []).some(
+        (b) =>
+          a.toLowerCase().includes(b.toLowerCase()) ||
+          b.toLowerCase().includes(a.toLowerCase()),
       ),
     )
-    if (interestMatches.length > 0) {
-      score += interestMatches.length * 20
-      reasons.push(`Matches your interests: ${interestMatches.join(', ')}`)
-    }
-
-    // ── 2. CAREER GOAL MATCHING ───────────────
-    const careerMatches = course.careerOutcomes.filter(
-      (outcome) =>
-        outcome.toLowerCase().includes(student.careerGoal.toLowerCase()) ||
-        student.careerGoal.toLowerCase().includes(outcome.toLowerCase()),
+    reasons.push(
+      `Your interest in ${matched.join(', ')} aligns with this degree`,
     )
-    if (careerMatches.length > 0) {
-      score += careerMatches.length * 25
-      reasons.push(`Aligns with your career goal: ${student.careerGoal}`)
-    }
+  }
 
-    // ── 3. SKILL LEVEL MATCHING ───────────────
-    if (course.difficultyLevel === student.skillLevel) {
-      score += 15
-      reasons.push(`Matches your skill level: ${student.skillLevel}`)
-    } else if (
-      (student.skillLevel === 'intermediate' &&
-        course.difficultyLevel === 'beginner') ||
-      (student.skillLevel === 'advanced' &&
-        course.difficultyLevel === 'intermediate')
-    ) {
-      score += 5
-      reasons.push('Slightly below your level — good for revision')
-    }
+  // Preferred activities match (10 points)
+  const activityMatch = countOverlap(
+    student.preferredActivities || [],
+    degree.idealActivities || [],
+  )
+  if (activityMatch > 0) {
+    score += Math.min(activityMatch * 4, 10)
+    reasons.push(`Your preferred activities match this field`)
+  }
 
-    // ── 4. GRADE BASED BOOST ──────────────────
-    // If student got A or B in similar courses → boost related courses
-    if (grades && grades.length > 0) {
-      grades.forEach((grade) => {
-        if (grade.status === 'passed' && grade.gradePoints >= 3.0) {
-          // Check if passed course tags match current course tags
-          const passedCourseTags = grade.course.tags || []
-          const tagOverlap = passedCourseTags.filter((tag) =>
-            course.tags.includes(tag),
-          )
-          if (tagOverlap.length > 0) {
-            score += tagOverlap.length * 10
-            reasons.push(`You performed well in similar courses`)
-          }
-        }
-        // If student failed a similar course → reduce score
-        if (grade.status === 'failed') {
-          const passedCourseTags = grade.course.tags || []
-          const tagOverlap = passedCourseTags.filter((tag) =>
-            course.tags.includes(tag),
-          )
-          if (tagOverlap.length > 0) {
-            score -= tagOverlap.length * 5
-            reasons.push(`You may need more preparation for this area`)
-          }
-        }
-      })
-    }
-
-    // ── 5. PREFERENCE MATCHING ────────────────
-    if (preferences) {
-      // Match preferred skills with course skills
-      const skillMatches = preferences.preferredSkills.filter((skill) =>
-        course.skillsGained.some(
-          (s) =>
-            s.toLowerCase().includes(skill.toLowerCase()) ||
-            skill.toLowerCase().includes(s.toLowerCase()),
-        ),
-      )
-      if (skillMatches.length > 0) {
-        score += skillMatches.length * 15
-        reasons.push(
-          `Teaches your preferred skills: ${skillMatches.join(', ')}`,
-        )
-      }
-
-      // Match preferred career paths
-      const careerPathMatches = preferences.preferredCareerPaths.filter(
-        (path) =>
-          course.careerOutcomes.some(
-            (outcome) =>
-              outcome.toLowerCase().includes(path.toLowerCase()) ||
-              path.toLowerCase().includes(outcome.toLowerCase()),
-          ),
-      )
-      if (careerPathMatches.length > 0) {
-        score += careerPathMatches.length * 20
-        reasons.push(
-          `Matches your career path: ${careerPathMatches.join(', ')}`,
-        )
-      }
-
-      // Liked courses boost — if student liked similar course
-      if (preferences.likedCourses && preferences.likedCourses.length > 0) {
-        const isLiked = preferences.likedCourses.some(
-          (likedId) => likedId.toString() === course._id.toString(),
-        )
-        if (isLiked) {
-          score += 30
-          reasons.push('You marked this course as interesting')
-        }
-      }
-
-      // Disliked courses penalty
-      if (
-        preferences.dislikedCourses &&
-        preferences.dislikedCourses.length > 0
-      ) {
-        const isDisliked = preferences.dislikedCourses.some(
-          (dislikedId) => dislikedId.toString() === course._id.toString(),
-        )
-        if (isDisliked) {
-          score = -1
-        }
-      }
-    }
-
-    // ── 6. SUCCESS RATE BONUS ─────────────────
-    if (course.successRate >= 85) {
-      score += 10
-      reasons.push(`High success rate: ${course.successRate}%`)
-    } else if (course.successRate >= 75) {
-      score += 5
-    }
-
-    // ── 7. RATING BONUS ───────────────────────
-    if (course.averageRating >= 4.5) {
-      score += 10
-      reasons.push(`Highly rated: ${course.averageRating}/5`)
-    } else if (course.averageRating >= 4.0) {
-      score += 5
-    }
-
-    // ── 8. COLLABORATIVE FILTERING ───────────
-    if (allStudents && allStudents.length > 0 && allEnrollments) {
-      // Find similar students
-      const similarStudents = findSimilarStudents(student, allStudents)
-
-      similarStudents.forEach(({ student: simStudent, similarityScore }) => {
-        // Find courses this similar student enrolled in
-        const simEnrollments = allEnrollments.filter(
-          (e) =>
-            e.student.toString() === simStudent._id.toString() &&
-            e.status === 'completed',
-        )
-
-        simEnrollments.forEach((enrollment) => {
-          if (enrollment.course.toString() === course._id.toString()) {
-            // Similar student completed this course!
-            const boost = Math.round(similarityScore * 0.3)
-            score += boost
-            reasons.push(
-              `Similar students with your profile completed this course`,
-            )
-          }
-        })
-      })
-    }
-    // ─────────────────────────────────────────
-
-    // ── 9. ALREADY ENROLLED PENALTY ──────────
-    const alreadyEnrolled = enrolledCourseIds.includes(course._id.toString())
-    if (alreadyEnrolled) {
-      score = -1
-    }
-
-    const successProbability = predictSuccessProbability(
-      student,
-      course,
-      grades,
-    )
-    return { course, score, reasons, successProbability }
-  })
-
-  // Filter and sort
-  const recommendations = scoredCourses
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-
-  return recommendations
+  return { score: Math.min(score, 30), reasons }
 }
 
-module.exports = recommendCourses
+// ── 3. SKILLS MATCH (15 points max) ───────────────────
+const scoreSkills = (student, degree) => {
+  let score = 0
+  const reasons = []
+
+  // Analytical skills
+  const analyticalMap = { low: 1, medium: 2, high: 3 }
+  const degreeAnalytical = analyticalMap[degree.idealAnalytical] || 2
+  const studentAnalytical = analyticalMap[student.analyticalSkills] || 2
+
+  if (studentAnalytical >= degreeAnalytical) {
+    score += 6
+    if (
+      student.analyticalSkills === 'high' &&
+      degree.idealAnalytical === 'high'
+    ) {
+      reasons.push(`Your high analytical skills are perfect for this degree`)
+    }
+  } else if (degreeAnalytical - studentAnalytical === 1) {
+    score += 3
+  }
+
+  // Creativity level
+  const degreeCreativity = analyticalMap[degree.idealCreativity] || 2
+  const studentCreativity = analyticalMap[student.creativityLevel] || 2
+  if (studentCreativity >= degreeCreativity) {
+    score += 5
+  } else {
+    score += 2
+  }
+
+  // Work preference (theory vs practical)
+  if (
+    degree.workType === 'both' ||
+    student.workPreference === 'both' ||
+    degree.workType === student.workPreference
+  ) {
+    score += 4
+    if (
+      degree.workType === student.workPreference &&
+      degree.workType !== 'both'
+    ) {
+      reasons.push(
+        `Matches your preference for ${student.workPreference} learning`,
+      )
+    }
+  }
+
+  return { score: Math.min(score, 15), reasons }
+}
+
+// ── 4. CAREER GOALS MATCH (10 points max) ─────────────
+const scoreCareerGoals = (student, degree) => {
+  let score = 0
+  const reasons = []
+
+  if (!student.careerGoal) return { score: 5, reasons }
+
+  // Career outcome match
+  const careerMatch = (degree.careerOutcomes || []).some(
+    (outcome) =>
+      outcome.toLowerCase().includes(student.careerGoal.toLowerCase()) ||
+      student.careerGoal.toLowerCase().includes(outcome.toLowerCase()),
+  )
+
+  if (careerMatch) {
+    score += 10
+    reasons.push(`Directly leads to your goal: ${student.careerGoal}`)
+  } else {
+    // Partial keyword match
+    const goalWords = student.careerGoal.toLowerCase().split(' ')
+    const partialMatch = (degree.careerOutcomes || []).some((outcome) =>
+      goalWords.some(
+        (word) => word.length > 3 && outcome.toLowerCase().includes(word),
+      ),
+    )
+    if (partialMatch) {
+      score += 5
+      reasons.push(`Related to your career goal: ${student.careerGoal}`)
+    }
+  }
+
+  // Work environment
+  if (
+    student.workEnvironment === 'any' ||
+    degree.field === student.workEnvironment ||
+    student.workEnvironment === 'office'
+  ) {
+    score += 2
+  }
+
+  return { score: Math.min(score, 10), reasons }
+}
+
+// ── 5. CONSTRAINTS MATCH (5 points max) ───────────────
+const scoreConstraints = (student, degree) => {
+  let score = 3 // base score — constraints rarely disqualify
+  const reasons = []
+
+  // Budget vs university fees
+  if (student.budget === 'low') {
+    const hasAffordable = (degree.universities || []).some(
+      (u) => u.hasScholarship || (u.feePerYear && u.feePerYear.includes('Gov')),
+    )
+    if (hasAffordable) {
+      score += 1
+      reasons.push(`Scholarship options available`)
+    }
+  } else if (student.budget === 'high') {
+    score += 2
+  } else {
+    score += 1
+  }
+
+  // Scholarship need
+  if (student.needsScholarship) {
+    const hasScholarship = (degree.universities || []).some(
+      (u) => u.hasScholarship,
+    )
+    if (hasScholarship) {
+      score += 1
+      reasons.push(`Universities offer scholarship for this degree`)
+    }
+  }
+
+  return { score: Math.min(score, 5), reasons }
+}
+
+// ── CONFIDENCE LABEL ──────────────────────────────────
+const getConfidenceLabel = (percentage) => {
+  if (percentage >= 85) return 'Excellent Match'
+  if (percentage >= 70) return 'Strong Match'
+  if (percentage >= 55) return 'Good Match'
+  if (percentage >= 40) return 'Possible Match'
+  return 'Weak Match'
+}
+
+// ── MAIN RECOMMENDATION FUNCTION ─────────────────────
+const recommendDegrees = (student, degrees) => {
+  const MAX_SCORE = 100 // 40 + 30 + 15 + 10 + 5
+
+  const scored = degrees
+    .filter((degree) => degree.isActive)
+    .map((degree) => {
+      const academic = scoreAcademic(student, degree)
+      const interests = scoreInterests(student, degree)
+      const skills = scoreSkills(student, degree)
+      const career = scoreCareerGoals(student, degree)
+      const constraints = scoreConstraints(student, degree)
+
+      const totalScore =
+        academic.score +
+        interests.score +
+        skills.score +
+        career.score +
+        constraints.score
+
+      const matchPercentage = Math.round((totalScore / MAX_SCORE) * 100)
+
+      // Collect all reasons
+      const allReasons = [
+        ...academic.reasons,
+        ...interests.reasons,
+        ...skills.reasons,
+        ...career.reasons,
+        ...constraints.reasons,
+      ].slice(0, 4) // max 4 reasons shown
+
+      // Build score breakdown
+      const breakdown = {
+        academic: `${academic.score}/40`,
+        interests: `${interests.score}/30`,
+        skills: `${skills.score}/15`,
+        career: `${career.score}/10`,
+        constraints: `${constraints.score}/5`,
+      }
+
+      return {
+        degree,
+        totalScore,
+        matchPercentage,
+        confidenceLabel: getConfidenceLabel(matchPercentage),
+        reasons: allReasons,
+        breakdown,
+      }
+    })
+
+  // Sort by score, return top matches above 20%
+  return scored
+    .filter((item) => item.matchPercentage >= 20)
+    .sort((a, b) => b.totalScore - a.totalScore)
+}
+
+module.exports = recommendDegrees
