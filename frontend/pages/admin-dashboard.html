@@ -5,11 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard - Course Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      .nav-toggle {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        cursor: pointer;
+        padding: 8px;
+        z-index: 200;
+      }
+      .nav-toggle span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        background: #f1f5f9;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+      }
+      .nav-toggle.open span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+      }
+      .nav-toggle.open span:nth-child(2) {
+        opacity: 0;
+      }
+      .nav-toggle.open span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+      }
+      @media (max-width: 768px) {
+        .navbar {
+          flex-wrap: wrap;
+          height: auto !important;
+          padding: 14px 20px !important;
+          gap: 0;
+          position: relative;
+        }
+        .nav-toggle {
+          display: flex;
+        }
+        .nav-links {
+          display: none;
+          flex-direction: column;
+          width: 100%;
+          gap: 4px !important;
+          padding: 12px 0 4px;
+          align-items: flex-start !important;
+          flex-wrap: nowrap !important;
+          justify-content: flex-start !important;
+        }
+        .nav-links.open {
+          display: flex;
+        }
+        .navbar .nav-links a,
+        .navbar .nav-links .btn-logout {
+          width: 100%;
+          padding: 10px 14px !important;
+          border-radius: 8px !important;
+          font-size: 14px !important;
+        }
+        .navbar .nav-name {
+          width: 100%;
+          padding: 6px 14px;
+          font-size: 13px;
+          color: #94a3b8;
+        }
+      }
+    </style>
   </head>
   <body class="page-admin page-admin-dashboard">
     <div class="navbar">
       <span class="logo">Admin Panel</span>
-      <div class="nav-links">
+      <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
         <a href="admin-courses.html">Manage Courses</a>
         <a href="admin-students.html">View Students</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
@@ -55,7 +130,8 @@
     </div>
 
     <script>
-      const API = 'https://courserecommendationsystem-production-0a2d.up.railway.app/api'
+      const API =
+        'https://courserecommendationsystem-production-0a2d.up.railway.app/api'
       const token = localStorage.getItem('token')
 
       if (!token) window.location.href = 'login.html'
@@ -79,6 +155,22 @@
         document.getElementById('totalEnrollments').textContent =
           enrollments.length
       }
+
+      function toggleNav() {
+        const nav = document.getElementById('navLinks')
+        const btn = document.querySelector('.nav-toggle')
+        nav.classList.toggle('open')
+        btn.classList.toggle('open')
+      }
+      // Close nav when clicking outside
+      document.addEventListener('click', function (e) {
+        const nav = document.getElementById('navLinks')
+        const btn = document.querySelector('.nav-toggle')
+        if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
+          nav.classList.remove('open')
+          btn.classList.remove('open')
+        }
+      })
 
       function logout() {
         localStorage.removeItem('token')
