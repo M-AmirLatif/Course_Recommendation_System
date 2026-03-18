@@ -3,7 +3,7 @@ const router = express.Router()
 const {
   getRecommendations,
 } = require('../controllers/recommendationController')
-const protect = require('../middleware/authMiddleware')
+const { protect } = require('../middleware/authMiddleware')
 
 router.get('/', protect, getRecommendations)
 
