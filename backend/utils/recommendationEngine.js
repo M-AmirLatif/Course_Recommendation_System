@@ -250,6 +250,33 @@ const scoreConstraints = (student, degree) => {
     }
   }
 
+  // Study location preference
+  const locationPref = normalize(student.studyLocation)
+  if (locationPref && locationPref !== 'any') {
+    const locations = (degree.universities || []).map((u) =>
+      normalize(u.location),
+    )
+    let locationMatch = false
+    if (locationPref === 'online') {
+      locationMatch = locations.some(
+        (loc) => loc.includes('online') || loc.includes('virtual'),
+      )
+    } else if (locationPref === 'abroad') {
+      locationMatch = locations.some((loc) =>
+        /(usa|uk|canada|australia|europe|international|abroad)/.test(loc),
+      )
+    } else if (locationPref === 'local') {
+      locationMatch = locations.length > 0
+    }
+
+    if (locationMatch) {
+      score += 1
+      reasons.push('Matches your study location preference')
+    } else {
+      score -= 1
+    }
+  }
+
   return { score: Math.min(score, 5), reasons }
 }
 
@@ -262,9 +289,225 @@ const getConfidenceLabel = (percentage) => {
   return 'Weak Match'
 }
 
+const formatBreakdownScore = (score, maxScore, options = {}) => {
+  const { signed = false } = options
+  const roundedScore = Number.isInteger(score)
+    ? score
+    : Number(score.toFixed(1))
+
+  const prefix = signed && roundedScore >= 0 ? '+' : ''
+  return `${prefix}${roundedScore}/${maxScore}`
+}
+
+const asArray = (value) => (Array.isArray(value) ? value : [])
+const getId = (value) =>
+  value && value._id ? String(value._id) : value ? String(value) : ''
+const getIdSet = (values = []) =>
+  new Set(asArray(values).map(getId).filter(Boolean))
+const normalize = (value) => String(value || '').trim().toLowerCase()
+const normalizeArray = (values = []) =>
+  asArray(values).map(normalize).filter(Boolean)
+
+const overlapRatio = (arr1 = [], arr2 = []) => {
+  const a = normalizeArray(arr1)
+  const b = normalizeArray(arr2)
+  if (!a.length || !b.length) return 0
+  let matches = 0
+  a.forEach((item) => {
+    if (b.some((other) => other.includes(item) || item.includes(other))) {
+      matches += 1
+    }
+  })
+  return matches / Math.max(a.length, b.length)
+}
+
+const keywordOverlap = (textA, textB) => {
+  const a = normalize(textA)
+    .split(/\s+/)
+    .filter((token) => token.length > 3)
+  const b = normalize(textB)
+    .split(/\s+/)
+    .filter((token) => token.length > 3)
+  if (!a.length || !b.length) return 0
+  let matches = 0
+  a.forEach((token) => {
+    if (b.some((other) => other.includes(token) || token.includes(other))) {
+      matches += 1
+    }
+  })
+  return matches / Math.max(a.length, b.length)
+}
+
+const degreeSimilarity = (degreeA, degreeB) => {
+  if (!degreeA || !degreeB) return 0
+  let score = 0
+  let weight = 0
+
+  const fieldMatch =
+    normalize(degreeA.field) && normalize(degreeA.field) === normalize(degreeB.field)
+      ? 1
+      : 0
+  score += fieldMatch * 3
+  weight += 3
+
+  score += overlapRatio(degreeA.requiredSubjects, degreeB.requiredSubjects) * 3
+  weight += 3
+
+  score += overlapRatio(degreeA.idealInterestAreas, degreeB.idealInterestAreas) * 3
+  weight += 3
+
+  score += overlapRatio(degreeA.careerOutcomes, degreeB.careerOutcomes) * 2
+  weight += 2
+
+  const workMatch =
+    normalize(degreeA.workType) &&
+    normalize(degreeA.workType) === normalize(degreeB.workType)
+      ? 1
+      : 0
+  score += workMatch * 1
+  weight += 1
+
+  return weight ? score / weight : 0
+}
+
+const studentSimilarity = (base, other) => {
+  if (!base || !other) return 0
+  let score = 0
+  let weight = 0
+  const add = (value, w) => {
+    score += value * w
+    weight += w
+  }
+
+  add(
+    normalize(base.majorStream) &&
+      normalize(base.majorStream) === normalize(other.majorStream)
+      ? 1
+      : 0,
+    2,
+  )
+  add(overlapRatio(base.subjectsStudied, other.subjectsStudied), 3)
+  add(overlapRatio(base.strongSubjects, other.strongSubjects), 3)
+  add(overlapRatio(base.interestAreas, other.interestAreas), 4)
+  add(overlapRatio(base.preferredActivities, other.preferredActivities), 2)
+  add(
+    normalize(base.analyticalSkills) === normalize(other.analyticalSkills)
+      ? 1
+      : 0,
+    1,
+  )
+  add(
+    normalize(base.creativityLevel) === normalize(other.creativityLevel) ? 1 : 0,
+    1,
+  )
+  add(
+    normalize(base.workPreference) === normalize(other.workPreference) ? 1 : 0,
+    1,
+  )
+  add(
+    normalize(base.workEnvironment) === normalize(other.workEnvironment) ? 1 : 0,
+    1,
+  )
+  add(keywordOverlap(base.careerGoal, other.careerGoal), 2)
+  add(normalize(base.budget) === normalize(other.budget) ? 1 : 0, 1)
+  add(Boolean(base.needsScholarship) === Boolean(other.needsScholarship) ? 1 : 0, 1)
+  add(
+    normalize(base.studyLocation) === normalize(other.studyLocation) ? 1 : 0,
+    1,
+  )
+
+  return weight ? score / weight : 0
+}
+
+const scoreFeedback = (degree, context = {}) => {
+  const currentPreference = context.currentPreference || null
+  if (!currentPreference) return { score: 0, reasons: [], hidden: false }
+
+  const liked = getIdSet(currentPreference.likedDegrees)
+  const disliked = getIdSet(currentPreference.dislikedDegrees)
+  const degreeId = getId(degree)
+
+  if (disliked.has(degreeId)) {
+    return {
+      score: -20,
+      reasons: ['You marked this degree as a poor fit'],
+      hidden: true,
+    }
+  }
+
+  let score = 0
+  const reasons = []
+
+  if (liked.has(degreeId)) {
+    score += 10
+    reasons.push('You already liked this degree')
+  }
+
+  const likedDegrees = asArray(currentPreference.likedDegrees).filter(
+    (item) => item && item._id,
+  )
+  const dislikedDegrees = asArray(currentPreference.dislikedDegrees).filter(
+    (item) => item && item._id,
+  )
+
+  let similarBoost = 0
+  let similarPenalty = 0
+  likedDegrees.forEach((likedDegree) => {
+    const similarity = degreeSimilarity(degree, likedDegree)
+    if (similarity >= 0.35) {
+      similarBoost += similarity * 6
+    }
+  })
+  dislikedDegrees.forEach((dislikedDegree) => {
+    const similarity = degreeSimilarity(degree, dislikedDegree)
+    if (similarity >= 0.35) {
+      similarPenalty += similarity * 7
+      if (similarity >= 0.65) {
+        reasons.push('Similar to a degree you disliked')
+      }
+    }
+  })
+
+  score += similarBoost - similarPenalty
+
+  const communityPreferences = context.communityPreferences || []
+  const currentStudent = context.student || null
+  let communityScore = 0
+
+  if (currentStudent && Array.isArray(communityPreferences)) {
+    communityPreferences.forEach((pref) => {
+      if (!pref || !pref.student) return
+      const similarity = studentSimilarity(currentStudent, pref.student)
+      if (similarity < 0.35) return
+      const communityLiked = getIdSet(pref.likedDegrees)
+      const communityDisliked = getIdSet(pref.dislikedDegrees)
+      if (communityLiked.has(degreeId)) {
+        communityScore += similarity * 6
+      }
+      if (communityDisliked.has(degreeId)) {
+        communityScore -= similarity * 4
+      }
+    })
+  }
+
+  if (communityScore >= 2) {
+    reasons.push('Students with a similar profile liked this degree')
+  }
+  if (communityScore <= -2) {
+    reasons.push('Students with a similar profile disliked this degree')
+  }
+
+  score += communityScore
+
+  if (score > 20) score = 20
+  if (score < -20) score = -20
+
+  return { score, reasons, hidden: false }
+}
+
 // ── MAIN RECOMMENDATION FUNCTION ─────────────────────
-const recommendDegrees = (student, degrees) => {
-  const MAX_SCORE = 100 // 40 + 30 + 15 + 10 + 5
+const recommendDegrees = (student, degrees, context = {}) => {
+  const MAX_SCORE = 120 // 40 + 30 + 15 + 10 + 5 + 20(feedback)
 
   const scored = degrees
     .filter((degree) => degree.isActive)
@@ -274,18 +517,23 @@ const recommendDegrees = (student, degrees) => {
       const skills = scoreSkills(student, degree)
       const career = scoreCareerGoals(student, degree)
       const constraints = scoreConstraints(student, degree)
+      const feedback = scoreFeedback(degree, context)
+
+      if (feedback.hidden) return null
 
       const totalScore =
         academic.score +
         interests.score +
         skills.score +
         career.score +
-        constraints.score
+        constraints.score +
+        feedback.score
 
       const matchPercentage = Math.round((totalScore / MAX_SCORE) * 100)
 
       // Collect all reasons
       const allReasons = [
+        ...feedback.reasons,
         ...academic.reasons,
         ...interests.reasons,
         ...skills.reasons,
@@ -295,11 +543,12 @@ const recommendDegrees = (student, degrees) => {
 
       // Build score breakdown
       const breakdown = {
-        academic: `${academic.score}/40`,
-        interests: `${interests.score}/30`,
-        skills: `${skills.score}/15`,
-        career: `${career.score}/10`,
-        constraints: `${constraints.score}/5`,
+        academic: formatBreakdownScore(academic.score, 40),
+        interests: formatBreakdownScore(interests.score, 30),
+        skills: formatBreakdownScore(skills.score, 15),
+        career: formatBreakdownScore(career.score, 10),
+        constraints: formatBreakdownScore(constraints.score, 5),
+        feedback: formatBreakdownScore(feedback.score, 20, { signed: true }),
       }
 
       return {
@@ -311,6 +560,7 @@ const recommendDegrees = (student, degrees) => {
         breakdown,
       }
     })
+    .filter(Boolean)
 
   // Sort by score, return top matches above 20%
   return scored

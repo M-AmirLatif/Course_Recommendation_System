@@ -1,126 +1,134 @@
 # Entity Relationship Diagram (ERD)
 
-## Course Recommender System
+## Degree Recommendation System
 
 ## Entities and Relationships
 
 ### Student
 
-```
+```text
 Student {
   _id: ObjectId (PK)
   name: String
   email: String (unique)
   password: String (hashed)
   studentId: String (unique)
+  role: String (student/admin)
+  educationLevel: String
+  previousQualification: String
+  majorStream: String
+  subjectsStudied: [String]
+  strongSubjects: [String]
+  gpa: Number
+  cgpa: Number
+  interestAreas: [String]
+  preferredActivities: [String]
+  analyticalSkills: String
+  communicationSkills: String
+  creativityLevel: String
+  workPreference: String
+  teamPreference: String
+  careerGoal: String
+  workEnvironment: String
+  budget: String
+  studyLocation: String
+  needsScholarship: Boolean
+  likedDegrees: [ObjectId -> Degree]
+  dislikedDegrees: [ObjectId -> Degree]
   department: String
   semester: Number
-  cgpa: Number
+  skillLevel: String
   interests: [String]
-  careerGoal: String
-  skillLevel: String (beginner/intermediate/advanced)
-  role: String (student/admin)
+}
+```
+
+### Degree
+
+```text
+Degree {
+  _id: ObjectId (PK)
+  name: String
+  shortName: String
+  field: String
+  description: String
+  duration: String
+  requiredSubjects: [String]
+  requiredStream: [String]
+  minGPA: Number
+  universities: [{ ... }]
+  careerOutcomes: [String]
+  expectedSalary: String
+  jobMarket: String
+  idealInterestAreas: [String]
+  idealActivities: [String]
+  idealAnalytical: String
+  idealCreativity: String
+  workType: String
+  successRate: Number
+  averageRating: Number
+  isActive: Boolean
 }
 ```
 
 ### Course
 
-```
+```text
 Course {
   _id: ObjectId (PK)
   courseCode: String (unique)
   title: String
   description: String
   department: String
+  degree: ObjectId (FK -> Degree)
   creditHours: Number
   difficultyLevel: String
   semesterOffered: Number
-  prerequisites: [ObjectId] → Course
+  prerequisites: [ObjectId -> Course]
   tags: [String]
   careerOutcomes: [String]
   skillsGained: [String]
   successRate: Number
   averageRating: Number
   totalEnrollments: Number
+  isCore: Boolean
+  category: String
+  relevantSubjects: [String]
+  skillTags: [String]
+  careerTags: [String]
   isActive: Boolean
-}
-```
-
-### Grade
-
-```
-Grade {
-  _id: ObjectId (PK)
-  student: ObjectId (FK → Student)
-  course: ObjectId (FK → Course)
-  marks: Number
-  grade: String (A/B/C/D/F)
-  gradePoints: Number
-  semester: Number
-  academicYear: String
-  status: String (passed/failed)
-}
-```
-
-### Enrollment
-
-```
-Enrollment {
-  _id: ObjectId (PK)
-  student: ObjectId (FK → Student)
-  course: ObjectId (FK → Course)
-  semester: Number
-  academicYear: String
-  status: String (enrolled/completed/dropped/failed)
-  enrollmentDate: Date
-  completionDate: Date
-  feedback: {
-    rating: Number
-    comment: String
-    wouldRecommend: Boolean
-  }
 }
 ```
 
 ### Preference
 
-```
+```text
 Preference {
   _id: ObjectId (PK)
-  student: ObjectId (FK → Student) (unique)
-  preferredCareerPaths: [String]
-  preferredSubjects: [String]
-  preferredSkills: [String]
-  preferredDifficulty: String
-  likedCourses: [ObjectId] → Course
-  dislikedCourses: [ObjectId] → Course
-  shortTermGoal: String
-  longTermGoal: String
+  student: ObjectId (FK -> Student) (unique)
+  likedDegrees: [ObjectId -> Degree]
+  dislikedDegrees: [ObjectId -> Degree]
 }
 ```
 
-### CourseOutcome
+### DegreeEnrollment
 
-```
-CourseOutcome {
+```text
+DegreeEnrollment {
   _id: ObjectId (PK)
-  course: ObjectId (FK → Course) (unique)
-  learningObjectives: [String]
-  industryDemand: String
-  relatedJobTitles: [String]
-  recommendedNextCourses: [ObjectId] → Course
-  toolsAndTechnologies: [String]
+  student: ObjectId (FK -> Student)
+  degree: ObjectId (FK -> Degree)
+  status: String (enrolled/removed)
+  enrolledAt: Date
 }
 ```
 
 ## Relationships Summary
 
-```
-Student  →  Grade       : One to Many (1 student, many grades)
-Student  →  Enrollment  : One to Many (1 student, many enrollments)
-Student  →  Preference  : One to One  (1 student, 1 preference profile)
-Course   →  Grade       : One to Many (1 course, many grades)
-Course   →  Enrollment  : One to Many (1 course, many enrollments)
-Course   →  CourseOutcome: One to One (1 course, 1 outcome profile)
-Course   →  Course      : Many to Many (prerequisites)
+```text
+Student          -> Preference       : One to One
+Student          -> DegreeEnrollment : One to Many
+Student          -> Degree           : Many to Many through likedDegrees and dislikedDegrees
+Degree           -> Course           : One to Many
+Degree           -> DegreeEnrollment : One to Many
+Course           -> Course           : Many to Many through prerequisites
 ```

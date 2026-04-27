@@ -118,6 +118,10 @@ const studentSchema = new mongoose.Schema(
       default: false,
     },
 
+    // Degree feedback cache (primary stored in Preference)
+    likedDegrees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Degree' }],
+    dislikedDegrees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Degree' }],
+
     // ── LEGACY FIELDS (kept for compatibility) ─
     department: { type: String, default: 'General' },
     semester: { type: Number, default: 1 },

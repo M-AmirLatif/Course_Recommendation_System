@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Enrollments - Degree Recommender</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/config.js"></script>
+    <style>
+      .enrollment-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+      .enrollment-list {
+        display: grid;
+        gap: 12px;
+      }
+      .enrollment-card {
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        background: rgba(15, 23, 42, 0.35);
+        display: grid;
+        gap: 10px;
+      }
+      .enrollment-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .status-chip {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .status-chip.active {
+        background: rgba(16, 185, 129, 0.18);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+      }
+      .status-chip.removed {
+        background: rgba(239, 68, 68, 0.18);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+      }
+      .enroll-action {
+        padding: 8px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(96, 165, 250, 0.35);
+        background: rgba(59, 130, 246, 0.12);
+        color: #dbeafe;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .enroll-action.danger {
+        border-color: rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.12);
+        color: #fecaca;
+      }
+    </style>
+  </head>
+  <body class="page-admin page-admin-enrollments">
+    <div class="navbar">
+      <span class="logo">Degree Admin Panel</span>
+      <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="admin-dashboard.html">Overview</a>
+        <a href="admin-degrees.html">Manage Degrees</a>
+        <a href="admin-courses.html">Manage Courses</a>
+        <a href="admin-students.html">Students</a>
+        <a href="admin-enrollments.html">Enrollments</a>
+        <a href="#" class="btn-logout" onclick="logout()">Logout</a>
+      </div>
+    </div>
+
+    <div class="dashboard content-stack">
+      <div class="page-header">
+        <h1>Degree Enrollments</h1>
+        <p class="subtitle">Review and manage student degree enrollments.</p>
+      </div>
+
+      <section class="glass-panel">
+        <div class="enrollment-toolbar">
+          <div class="form-group" style="min-width:220px">
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter" onchange="loadEnrollments()">
+              <option value="enrolled">Active</option>
+              <option value="removed">Removed</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+          <div id="enrollmentCount" class="count-badge">0 enrollments</div>
+        </div>
+        <div id="enrollmentList" class="enrollment-list">
+          <p class="empty-text">Loading enrollments...</p>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const API = window.APP_CONFIG.API_BASE_URL
+      const token = localStorage.getItem('token')
+      if (!token) window.location.href = 'login.html'
+
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      }
+
+      window.onload = () => loadEnrollments()
+
+      function formatDate(dateString) {
+        if (!dateString) return '-'
+        const date = new Date(dateString)
+        return date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      }
+
+      async function loadEnrollments() {
+        const status = document.getElementById('statusFilter').value
+        const target = document.getElementById('enrollmentList')
+        target.innerHTML = '<p class="empty-text">Loading enrollments...</p>'
+        try {
+          const res = await fetch(
+            `${API}/admin/degree-enrollments?status=${encodeURIComponent(status)}`,
+            { headers },
+          )
+          const data = await res.json()
+          if (!res.ok) throw new Error(data.message || 'Unable to load')
+
+          const list = Array.isArray(data) ? data : []
+          document.getElementById('enrollmentCount').textContent = `${
+            list.length
+          } enrollment${list.length === 1 ? '' : 's'}`
+          if (!list.length) {
+            target.innerHTML =
+              '<p class="empty-text">No enrollments match your filters.</p>'
+            return
+          }
+
+          target.innerHTML = list
+            .map((item) => {
+              const statusLabel = item.status === 'removed' ? 'Removed' : 'Active'
+              const statusClass = item.status === 'removed' ? 'removed' : 'active'
+              const actionLabel =
+                item.status === 'removed' ? 'Restore' : 'Remove'
+              const actionClass =
+                item.status === 'removed' ? '' : 'danger'
+              return `
+              <div class="enrollment-card">
+                <div class="enrollment-meta">
+                  <div>
+                    <p class="row-title">${item.student?.name || 'Unknown'} enrolled in ${
+                item.degree?.shortName || item.degree?.name || 'Degree'
+              }</p>
+                    <p class="row-meta">${item.student?.email || ''} · ${
+                item.student?.studentId || ''
+              }</p>
+                  </div>
+                  <div class="status-chip ${statusClass}">${statusLabel}</div>
+                </div>
+                <div class="row-meta">Enrolled: ${formatDate(
+                  item.enrolledAt || item.updatedAt,
+                )}</div>
+                <div>
+                  <button class="enroll-action ${actionClass}" onclick="updateEnrollment('${
+                    item._id
+                  }','${item.status === 'removed' ? 'enrolled' : 'removed'}')">${actionLabel}</button>
+                </div>
+              </div>
+            `
+            })
+            .join('')
+        } catch (error) {
+          target.innerHTML = `<p class="error-text">${
+            error.message || 'Error loading enrollments.'
+          }</p>`
+        }
+      }
+
+      async function updateEnrollment(id, status) {
+        if (!confirm('Update this enrollment?')) return
+        const res = await fetch(`${API}/admin/degree-enrollments/${id}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ status }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.message || 'Unable to update enrollment')
+          return
+        }
+        loadEnrollments()
+      }
+
+      function toggleNav() {
+        const nav = document.getElementById('navLinks')
+        const btn = document.querySelector('.nav-toggle')
+        nav.classList.toggle('open')
+        btn.classList.toggle('open')
+      }
+      document.addEventListener('click', function (e) {
+        const nav = document.getElementById('navLinks')
+        const btn = document.querySelector('.nav-toggle')
+        if (!nav.contains(e.target) && !btn.contains(e.target)) {
+          nav.classList.remove('open')
+          btn.classList.remove('open')
+        }
+      })
+
+      function logout() {
+        localStorage.removeItem('token')
+        localStorage.removeItem('studentName')
+        localStorage.removeItem('studentId')
+        window.location.href = 'login.html'
+      }
+    </script>
+  </body>
+</html>

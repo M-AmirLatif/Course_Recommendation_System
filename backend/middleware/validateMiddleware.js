@@ -1,14 +1,16 @@
 // Validate register input
 const validateRegister = (req, res, next) => {
-  const { name, email, password, studentId, department, semester } = req.body
+  const { name, email, password, studentId, educationLevel } = req.body
 
-  if (!name || !email || !password || !studentId || !department || !semester) {
-    return res.status(400).json({ message: 'All fields are required' })
+  if (!name || !email || !password || !studentId || !educationLevel) {
+    return res.status(400).json({
+      message: 'Name, email, password, student ID, and education level are required',
+    })
   }
 
-  if (password.length < 6) {
+  if (password.length < 8) {
     return res.status(400).json({
-      message: 'Password must be at least 6 characters',
+      message: 'Password must be at least 8 characters',
     })
   }
 
@@ -17,8 +19,11 @@ const validateRegister = (req, res, next) => {
     return res.status(400).json({ message: 'Invalid email format' })
   }
 
-  if (semester < 1 || semester > 8) {
-    return res.status(400).json({ message: 'Semester must be between 1 and 8' })
+  const strongPasswordRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/
+  if (!strongPasswordRegex.test(password)) {
+    return res.status(400).json({
+      message: 'Password must contain at least one letter and one number',
+    })
   }
 
   next()
@@ -37,17 +42,26 @@ const validateLogin = (req, res, next) => {
 
 // Validate course input
 const validateCourse = (req, res, next) => {
-  const { courseCode, title, department, creditHours, difficultyLevel } =
-    req.body
+  const {
+    courseCode,
+    title,
+    description,
+    department,
+    creditHours,
+    difficultyLevel,
+  } = req.body
 
   if (
     !courseCode ||
     !title ||
+    !description ||
     !department ||
     !creditHours ||
     !difficultyLevel
   ) {
-    return res.status(400).json({ message: 'All course fields are required' })
+    return res.status(400).json({
+      message: 'courseCode, title, description, department, creditHours, and difficultyLevel are required',
+    })
   }
 
   if (creditHours < 1 || creditHours > 6) {
@@ -59,4 +73,21 @@ const validateCourse = (req, res, next) => {
   next()
 }
 
-module.exports = { validateRegister, validateLogin, validateCourse }
+const validateDegree = (req, res, next) => {
+  const { name, field } = req.body
+
+  if (!name || !field) {
+    return res.status(400).json({
+      message: 'Degree name and field are required',
+    })
+  }
+
+  next()
+}
+
+module.exports = {
+  validateRegister,
+  validateLogin,
+  validateCourse,
+  validateDegree,
+}

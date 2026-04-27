@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashboard - Course Recommender</title>
+    <title>Dashboard - Degree Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/config.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -37,6 +39,24 @@
       }
       .nav-toggle.open span:nth-child(3) {
         transform: translateY(-7px) rotate(-45deg);
+      }
+      .enrollment-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .btn-unenroll {
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.12);
+        color: #fecaca;
+        padding: 6px 12px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-unenroll:hover {
+        background: rgba(239, 68, 68, 0.2);
       }
       @media (max-width: 768px) {
         .navbar {
@@ -80,13 +100,13 @@
   </head>
   <body class="page-dashboard">
     <div class="navbar">
-      <span class="logo">Course Recommender</span>
+      <span class="logo">Degree Recommender</span>
       <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="navLinks">
         <span id="navName" class="nav-name"></span>
-        <a href="recommendations.html">Get Recommendations</a>
+        <a href="recommendations.html">Degree Matches</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -99,24 +119,24 @@
 
       <div class="cards-grid">
         <div class="card">
-          <div class="card-icon">Courses</div>
+          <div class="card-icon">Degrees</div>
           <h3 id="totalCourses">0</h3>
-          <p>Courses Available</p>
+          <p>Programs Available</p>
         </div>
         <div class="card">
           <div class="card-icon">Enrollments</div>
           <h3 id="enrolledCourses">0</h3>
-          <p>Enrolled Courses</p>
+          <p>Enrolled Degrees</p>
         </div>
         <div class="card">
-          <div class="card-icon">CGPA</div>
+          <div class="card-icon">GPA</div>
           <h3 id="cgpa">0.0</h3>
-          <p>Current CGPA</p>
+          <p>Profile GPA</p>
         </div>
         <div class="card">
           <div class="card-icon">AI</div>
           <h3 id="recommendations">5</h3>
-          <p>Recommended Courses</p>
+          <p>Recommended Degrees</p>
         </div>
       </div>
 
@@ -132,16 +152,16 @@
             <p id="profileEmail">-</p>
           </div>
           <div class="profile-item">
-            <label>Department</label>
-            <p id="profileDept">-</p>
+            <label>Education Level</label>
+            <p id="profileEducation">-</p>
           </div>
           <div class="profile-item">
-            <label>Semester</label>
-            <p id="profileSemester">-</p>
+            <label>Major Stream</label>
+            <p id="profileStream">-</p>
           </div>
           <div class="profile-item">
-            <label>Skill Level</label>
-            <p id="profileSkill">-</p>
+            <label>Work Preference</label>
+            <p id="profileWork">-</p>
           </div>
           <div class="profile-item career-goal-item">
             <label>Career Goal</label>
@@ -163,14 +183,13 @@
 
       <div class="center-cta">
         <a href="recommendations.html" class="cta-btn"
-          >Get AI Recommendations</a
+          >Explore Degree Recommendations</a
         >
       </div>
     </div>
 
     <script>
-      const API =
-        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
+      const API = window.APP_CONFIG.API_BASE_URL
       const token = localStorage.getItem('token')
 
       if (!token) {
@@ -186,9 +205,9 @@
         document.getElementById('welcomeMsg').textContent =
           'Loading your dashboard...'
         await loadProfile()
-        await loadEnrollments()
-        await loadCourseCount()
-        await loadGrades()
+        await loadDegreeEnrollments()
+        await loadDegreeCount()
+        await loadRecommendationCount()
       }
 
       async function loadProfile() {
@@ -200,68 +219,100 @@
         document.getElementById('navName').textContent = data.name
         document.getElementById('profileName').textContent = data.name
         document.getElementById('profileEmail').textContent = data.email
-        document.getElementById('profileDept').textContent = data.department
-        document.getElementById('profileSemester').textContent =
-          `Semester ${data.semester}`
-        document.getElementById('profileCareer').textContent = data.careerGoal
-        document.getElementById('profileSkill').textContent = data.skillLevel
+        document.getElementById('profileEducation').textContent =
+          data.educationLevel || 'Not specified'
+        document.getElementById('profileStream').textContent =
+          data.majorStream || 'Not specified'
+        document.getElementById('profileWork').textContent =
+          data.workPreference || 'Not specified'
+        document.getElementById('profileCareer').textContent =
+          data.careerGoal || 'Not specified'
 
         const tagsDiv = document.getElementById('interestTags')
         tagsDiv.innerHTML = ''
-        const interests = data.interests || []
+        const interests = data.interestAreas || data.interests || []
         interests.forEach((interest) => {
           tagsDiv.innerHTML += `<span class="tag">${interest}</span>`
         })
       }
 
-      async function loadCourseCount() {
-        const res = await fetch(`${API}/courses`, { headers })
+      async function loadDegreeCount() {
+        const res = await fetch(`${API}/degrees`, { headers })
         const data = await res.json()
-        document.getElementById('totalCourses').textContent = data.length
+        document.getElementById('totalCourses').textContent = Array.isArray(data)
+          ? data.length
+          : 0
       }
 
-      async function loadGrades() {
-        const res = await fetch(`${API}/grades`, { headers })
+      async function loadDegreeEnrollments() {
+        const res = await fetch(`${API}/degree-enrollments`, { headers })
         const data = await res.json()
-        document.getElementById('cgpa').textContent = data.cgpa || '0.0'
-      }
+        const enrollments = Array.isArray(data.enrollments) ? data.enrollments : []
 
-      async function loadEnrollments() {
-        const res = await fetch(`${API}/enrollments`, { headers })
-        const data = await res.json()
-
-        document.getElementById('enrolledCourses').textContent = data.length
+        document.getElementById('enrolledCourses').textContent =
+          data.count ?? enrollments.length
 
         const list = document.getElementById('enrollmentsList')
 
-        if (data.length === 0) {
+        if (enrollments.length === 0) {
           list.innerHTML =
-            '<p class="empty-text">No enrollments yet. Get recommendations to enroll.</p>'
+            '<p class="empty-text">No degree enrollments yet. Get recommendations to enroll.</p>'
           return
         }
 
         list.innerHTML = ''
-        data.forEach((enrollment) => {
-          const statusClass =
-            enrollment.status === 'completed'
-              ? 'status-completed'
-              : enrollment.status === 'failed'
-                ? 'status-failed'
-                : 'status-enrolled'
+        enrollments.forEach((enrollment) => {
+          const degree = enrollment.degree || {}
+          const enrollmentId = enrollment._id
+          const degreeName = degree.name || 'Degree'
+          const degreeShort = degree.shortName || 'Program'
+          const degreeField = degree.field || 'General'
+          const statusClass = 'status-enrolled'
 
           list.innerHTML += `
             <div class="enrollment-row">
               <div class="enrollment-main">
-                <p class="enrollment-title">${enrollment.course.title}</p>
+                <p class="enrollment-title">${degreeName}</p>
                 <div class="enrollment-meta">
-                  <span class="meta-pill">${enrollment.course.courseCode}</span>
-                  <span class="meta-pill">${enrollment.course.creditHours} Credit Hours</span>
+                  <span class="meta-pill">${degreeShort}</span>
+                  <span class="meta-pill">${degreeField}</span>
                 </div>
               </div>
-              <span class="status-badge ${statusClass}">${enrollment.status}</span>
+              <div class="enrollment-actions">
+                <span class="status-badge ${statusClass}">enrolled</span>
+                <button class="btn-unenroll" onclick="unenrollDegree('${enrollmentId}')">Unenroll</button>
+              </div>
             </div>
           `
         })
+      }
+
+      async function unenrollDegree(degreeId) {
+        const res = await fetch(`${API}/degree-enrollments/${degreeId}`, {
+          method: 'DELETE',
+          headers,
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.message || 'Could not unenroll')
+          return
+        }
+        await loadDegreeEnrollments()
+        await loadRecommendationCount()
+      }
+
+      async function loadRecommendationCount() {
+        try {
+          const res = await fetch(`${API}/recommendations`, { headers })
+          const data = await res.json()
+          document.getElementById('recommendations').textContent = Array.isArray(
+            data.recommendations,
+          )
+            ? data.recommendations.length
+            : 0
+        } catch (error) {
+          document.getElementById('recommendations').textContent = '0'
+        }
       }
 
       function toggleNav() {

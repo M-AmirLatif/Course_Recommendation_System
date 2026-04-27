@@ -3,18 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Course Recommender</title>
+    <title>Login - Degree Recommender</title>
     <link rel="stylesheet" href="frontend/css/style.css" />
-    <link rel="icon" href="/Course_Recommendation_System/favicon.png" type="image/png" />
+    <link rel="icon" href="favicon.png" type="image/png" />
+    <script src="frontend/js/runtime-config.js"></script>
+    <script src="frontend/js/config.js"></script>
   </head>
   <body class="page-auth page-login">
     <div class="auth-container">
       <div class="auth-box">
         <div class="auth-logo">
-          <div class="logo-icon">Course Recommender</div>
+          <div class="logo-icon">Degree Recommender</div>
         </div>
         <h2>Welcome Back</h2>
-        <p class="subtitle">Login to continue to your course recommendations</p>
+        <p class="subtitle">Login to continue to your degree recommendations</p>
 
         <div class="alert alert-error" id="errorAlert"></div>
 
@@ -36,16 +38,13 @@
 
         <div class="auth-link">
           Do not have an account?
-          <a href="/Course_Recommendation_System/frontend/pages/register.html"
-            >Register here</a
-          >
+          <a href="frontend/pages/register.html">Register here</a>
         </div>
       </div>
     </div>
 
     <script>
-      const API =
-        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
+      const API = window.APP_CONFIG.API_BASE_URL
 
       if (localStorage.getItem('token')) {
         const role = localStorage.getItem('userRole')

@@ -24,6 +24,11 @@ const courseSchema = new mongoose.Schema(
       required: true,
       // e.g. "Computer Science"
     },
+    degree: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Degree',
+      // optional link to the parent degree for curriculum suggestions
+    },
     creditHours: {
       type: Number,
       required: true,
@@ -91,6 +96,24 @@ const courseSchema = new mongoose.Schema(
       default: 0,
       // how many students took this course (popularity signal)
     },
+
+    // Marks core/major courses for the linked degree
+    isCore: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Course category for degree pathways
+    category: {
+      type: String,
+      enum: ['core', 'foundation', 'elective'],
+      default: 'core',
+    },
+
+    // Degree-relevant metadata for smarter course suggestions
+    relevantSubjects: [{ type: String }],
+    skillTags: [{ type: String }],
+    careerTags: [{ type: String }],
 
     isActive: {
       type: Boolean,

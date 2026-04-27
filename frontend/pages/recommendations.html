@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Degree Recommendations</title>
+    <title>Degree Recommendations - Degree Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/config.js"></script>
     <style>
       .rec-card {
         background: linear-gradient(
@@ -19,6 +21,47 @@
         position: relative;
         overflow: hidden;
         transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .page-recommendations .rec-card {
+        display: flex;
+        flex-direction: column;
+        grid-template-columns: none;
+        align-items: stretch;
+      }
+      .rec-top {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .rec-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 260px;
+        gap: 18px;
+        align-items: start;
+      }
+      .rec-main {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+      }
+      .rec-side {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .rec-side .breakdown-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .enroll-count {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
       }
       .rec-card::before {
         content: '';
@@ -38,7 +81,7 @@
         display: flex;
         align-items: flex-start;
         gap: 16px;
-        margin-bottom: 14px;
+        flex-wrap: wrap;
       }
       .rec-rank {
         width: 52px;
@@ -105,8 +148,15 @@
         color: #93c5fd;
         margin-right: 8px;
       }
+      .rec-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-top: 6px;
+      }
       .match-bar-wrap {
-        margin: 14px 0;
+        margin: 6px 0;
       }
       .match-label {
         display: flex;
@@ -205,9 +255,9 @@
       }
       .breakdown-grid {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
         gap: 8px;
-        margin-top: 12px;
+        margin-top: 8px;
       }
       .bd-item {
         text-align: center;
@@ -231,7 +281,7 @@
         color: #93c5fd;
       }
       .uni-section {
-        margin-top: 16px;
+        margin-top: 12px;
         border-top: 1px solid rgba(148, 163, 184, 0.15);
         padding-top: 14px;
       }
@@ -300,6 +350,7 @@
         flex-wrap: wrap;
         gap: 6px;
         margin-top: 6px;
+        justify-content: flex-start;
       }
       .career-chip {
         padding: 4px 12px;
@@ -309,6 +360,37 @@
         background: rgba(139, 92, 246, 0.12);
         color: #c4b5fd;
         border: 1px solid rgba(139, 92, 246, 0.25);
+      }
+      .course-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+        justify-content: flex-start;
+      }
+      .course-card {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(59, 130, 246, 0.12);
+        color: #bfdbfe;
+        border: 1px solid rgba(96, 165, 250, 0.3);
+        min-width: 160px;
+      }
+      .course-card .course-meta {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #93c5fd;
+      }
+      .course-card .course-reason {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-muted);
       }
       .salary-badge {
         display: inline-flex;
@@ -322,6 +404,21 @@
         color: #6ee7b7;
         border: 1px solid rgba(16, 185, 129, 0.25);
         margin-top: 8px;
+      }
+      .rec-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 6px;
+      }
+      .btn-unenroll {
+        background: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        color: #fecaca;
+      }
+      .btn-unenroll:hover {
+        background: rgba(239, 68, 68, 0.2);
       }
       .nav-toggle {
         display: none;
@@ -387,7 +484,16 @@
           color: #94a3b8;
         }
         .breakdown-grid {
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .rec-body {
+          grid-template-columns: 1fr;
+        }
+        .rec-side {
+          order: 2;
+        }
+        .rec-main {
+          order: 1;
         }
         .rec-degree-name {
           font-size: 16px;
@@ -400,7 +506,7 @@
   </head>
   <body class="page-recommendations">
     <div class="navbar">
-      <span class="logo">Course Recommender</span>
+      <span class="logo">Degree Recommender</span>
       <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
         <span></span><span></span><span></span>
       </button>
@@ -413,7 +519,7 @@
 
     <div class="dashboard content-stack">
       <div class="page-header">
-        <h1>🎓 Degree Recommendations</h1>
+        <h1>Degree Recommendations</h1>
         <p class="subtitle" id="subtitleMsg">Analyzing your profile...</p>
       </div>
 
@@ -438,7 +544,7 @@
         <h2>Best Degrees For You</h2>
         <div id="recommendationsList">
           <div class="loading-box">
-            <div class="loading-emoji">🤖</div>
+            <div class="loading-emoji">...</div>
             <p>Analyzing your academic profile...</p>
           </div>
         </div>
@@ -446,8 +552,7 @@
     </div>
 
     <script>
-      const API =
-        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
+      const API = window.APP_CONFIG.API_BASE_URL
       const token = localStorage.getItem('token')
       if (!token) window.location.href = 'login.html'
       const headers = {
@@ -480,55 +585,183 @@
         return r === 1 ? 'gold' : r === 2 ? 'silver' : r === 3 ? 'bronze' : ''
       }
 
-      window.onload = async () => {
-        try {
-          const res = await fetch(`${API}/recommendations`, { headers })
-          const data = await res.json()
-          document.getElementById('subtitleMsg').textContent =
-            `Personalized degree recommendations for ${data.student}`
-          document.getElementById('careerGoal').textContent =
-            data.careerGoal || 'Not specified'
-          document.getElementById('totalAnalyzed').textContent =
-            `${data.totalDegreesAnalyzed} degrees`
-          ;(data.interestAreas || []).forEach((a) => {
-            document.getElementById('interestTags').innerHTML +=
-              `<span class="tag">${a}</span>`
-          })
-          const list = document.getElementById('recommendationsList')
-          if (!data.recommendations || data.recommendations.length === 0) {
-            list.innerHTML =
-              '<div class="empty-text"><p>No degree recommendations yet. Admin needs to add degrees to the system.</p></div>'
-            return
-          }
-          list.innerHTML = ''
-          data.recommendations.forEach((rec) => {
-            const mc = getMatchClass(rec.matchPercentage),
-              cc = getConfClass(rec.confidenceLabel),
-              rc = getRankClass(rec.rank)
+      function formatBreakdownValue(value, fallback) {
+        if (!value) return fallback
+
+        const match = String(value).match(/^([+-]?\d+(?:\.\d+)?)(\/\d+)$/)
+        if (!match) return escapeHtml(value)
+
+        const score = Number(match[1])
+        const suffix = match[2]
+        const rounded = Number.isInteger(score) ? score : Number(score.toFixed(1))
+        const prefix = score >= 0 && String(match[1]).startsWith('+') ? '+' : ''
+
+        return `${prefix}${rounded}${suffix}`
+      }
+
+      const state = {
+        likedDegrees: new Set(),
+        dislikedDegrees: new Set(),
+        maxEnrollments: 2,
+        enrolledDegreeIds: new Set(),
+      }
+
+      function escapeHtml(value) {
+        if (value === null || value === undefined) return ''
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;')
+      }
+
+      async function loadFeedbackState() {
+        const res = await fetch(`${API}/preferences`, { headers })
+        if (!res.ok) return
+        const pref = await res.json()
+        state.likedDegrees = new Set((pref.likedDegrees || []).map((id) => String(id)))
+        state.dislikedDegrees = new Set(
+          (pref.dislikedDegrees || []).map((id) => String(id)),
+        )
+      }
+
+      async function loadEnrollmentState() {
+        const res = await fetch(`${API}/degree-enrollments`, { headers })
+        if (!res.ok) return
+        const data = await res.json()
+        state.maxEnrollments = data.maxAllowed || 2
+        state.enrolledDegreeIds = new Set(
+          (data.enrollments || []).map((e) => String(e.degree?._id || e.degree)),
+        )
+      }
+
+      async function setDegreeFeedback(degreeId, action) {
+        const res = await fetch(`${API}/preferences/degree-feedback`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ degreeId, action }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.message || 'Could not update feedback')
+          return
+        }
+        state.likedDegrees = new Set((data.likedDegrees || []).map((id) => String(id)))
+        state.dislikedDegrees = new Set(
+          (data.dislikedDegrees || []).map((id) => String(id)),
+        )
+        await render()
+      }
+
+      async function enrollDegree(degreeId) {
+        const res = await fetch(`${API}/degree-enrollments/${degreeId}`, {
+          method: 'POST',
+          headers,
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.message || 'Could not enroll')
+          return
+        }
+        await loadEnrollmentState()
+        await render()
+      }
+
+      async function unenrollDegree(degreeId) {
+        const res = await fetch(`${API}/degree-enrollments/${degreeId}`, {
+          method: 'DELETE',
+          headers,
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          alert(data.message || 'Could not unenroll')
+          return
+        }
+        await loadEnrollmentState()
+        await render()
+      }
+
+      async function render() {
+        const res = await fetch(`${API}/recommendations`, { headers })
+        const data = await res.json()
+
+        document.getElementById('subtitleMsg').textContent =
+          `Personalized degree recommendations for ${data.student}`
+        document.getElementById('careerGoal').textContent =
+          data.careerGoal || 'Not specified'
+        document.getElementById('totalAnalyzed').textContent =
+          `${data.totalDegreesAnalyzed} degrees`
+
+        const tagsEl = document.getElementById('interestTags')
+        tagsEl.innerHTML = ''
+        ;(data.interestAreas || []).forEach((a) => {
+          tagsEl.innerHTML += `<span class="tag">${escapeHtml(a)}</span>`
+        })
+
+        const list = document.getElementById('recommendationsList')
+        if (!data.recommendations || data.recommendations.length === 0) {
+          list.innerHTML =
+            '<div class="empty-text"><p>No degree recommendations yet. Admin needs to add degrees to the system.</p></div>'
+          return
+        }
+
+        list.innerHTML = data.recommendations
+          .map((rec) => {
+            const mc = getMatchClass(rec.matchPercentage)
+            const cc = getConfClass(rec.confidenceLabel)
+            const rc = getRankClass(rec.rank)
+            const bd = rec.breakdown || {}
+
+            const degreeId = String(rec.degreeId)
+            const isLiked = state.likedDegrees.has(degreeId)
+            const isDisliked = state.dislikedDegrees.has(degreeId)
+            const isEnrolled = state.enrolledDegreeIds.has(degreeId)
+            const canEnroll =
+              !isEnrolled && state.enrolledDegreeIds.size < state.maxEnrollments
+
             const whyTags = (rec.whyRecommended || [])
-              .map((r) => `<span class="why-tag">✓ ${r}</span>`)
+              .map((r) => `<span class="why-tag">${escapeHtml(r)}</span>`)
               .join('')
+
             const unis = (rec.universities || [])
               .slice(0, 4)
               .map(
                 (u) =>
-                  `<div class="uni-item"><div><p class="uni-name">${u.name}</p><p class="uni-loc">📍 ${u.location}</p></div><div class="uni-meta">${u.feePerYear ? `<span class="uni-fee">${u.feePerYear}/yr</span>` : ''} ${u.hasScholarship ? `<span class="badge-green">🎓 Scholarship</span>` : ''} ${u.admissionTest && u.admissionTest !== 'None' ? `<span class="badge-gray">📝 ${u.admissionTest}</span>` : ''}</div></div>`,
+                  `<div class="uni-item"><div><p class="uni-name">${escapeHtml(u.name)}</p><p class="uni-loc">${escapeHtml(u.location)}</p></div><div class="uni-meta">${u.feePerYear ? `<span class="uni-fee">${escapeHtml(u.feePerYear)}/yr</span>` : ''} ${u.hasScholarship ? `<span class="badge-green">Scholarship</span>` : ''} ${u.admissionTest && u.admissionTest !== 'None' ? `<span class="badge-gray">${escapeHtml(u.admissionTest)}</span>` : ''}</div></div>`,
               )
               .join('')
-            const careers = (rec.careerOutcomes || [])
-              .slice(0, 5)
-              .map((c) => `<span class="career-chip">${c}</span>`)
-              .join('')
-            const bd = rec.breakdown || {}
-            list.innerHTML += `<div class="rec-card">
-              <div class="rec-header">
+
+        const careers = (rec.careerOutcomes || [])
+          .slice(0, 5)
+          .map((c) => `<span class="career-chip">${escapeHtml(c)}</span>`)
+          .join('')
+        const courses = (rec.majorCourses || [])
+          .slice(0, 6)
+          .map(
+            (course) =>
+              `<div class="course-card">
+                <div>${escapeHtml(course.courseCode || '')} ${escapeHtml(
+                course.title || '',
+              )}</div>
+                <div class="course-meta">${escapeHtml(course.category || 'core')}</div>
+                <div class="course-reason">${escapeHtml(
+                course.reason || 'Core course for this degree',
+              )}</div>
+              </div>`,
+          )
+          .join('')
+
+            return `<div class="rec-card">
+              <div class="rec-top">
+                <div class="rec-header">
                 <div class="rec-rank ${rc}">${rec.rank}</div>
                 <div style="flex:1;min-width:0">
-                  <p class="rec-degree-name">${rec.name}</p>
-                  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:4px">
-                    <span class="rec-field-badge">${rec.field}</span>
-                    <span style="font-size:12px;color:var(--text-muted)">⏱ ${rec.duration || '4 years'}</span>
-                    <span class="conf-badge ${cc}">${rec.confidenceLabel}</span>
+                  <p class="rec-degree-name">${escapeHtml(rec.name)}</p>
+                  <div class="rec-meta-row">
+                    <span class="rec-field-badge">${escapeHtml(rec.field)}</span>
+                    <span style="font-size:12px;color:var(--text-muted)">${escapeHtml(rec.duration || '4 years')}</span>
+                    <span class="conf-badge ${cc}">${escapeHtml(rec.confidenceLabel)}</span>
                   </div>
                 </div>
               </div>
@@ -537,21 +770,52 @@
                 <div class="match-bar"><div class="match-bar-fill ${mc}" style="width:${rec.matchPercentage}%"></div></div>
               </div>
               ${whyTags ? `<div class="why-list">${whyTags}</div>` : ''}
-              <div class="breakdown-grid">
-                <div class="bd-item"><p class="bd-label">Academic</p><p class="bd-val">${bd.academic || '-'}</p></div>
-                <div class="bd-item"><p class="bd-label">Interests</p><p class="bd-val">${bd.interests || '-'}</p></div>
-                <div class="bd-item"><p class="bd-label">Skills</p><p class="bd-val">${bd.skills || '-'}</p></div>
-                <div class="bd-item"><p class="bd-label">Career</p><p class="bd-val">${bd.career || '-'}</p></div>
-                <div class="bd-item"><p class="bd-label">Budget</p><p class="bd-val">${bd.constraints || '-'}</p></div>
               </div>
-              <div style="margin-top:14px">
-                <p class="section-lbl">Career Outcomes</p>
-                <div class="career-chips">${careers}</div>
-                ${rec.expectedSalary ? `<div class="salary-badge">💰 ${rec.expectedSalary}</div>` : ''}
+              <div class="rec-body">
+                <div class="rec-main">
+                  <div style="margin-top:6px">
+                    <p class="section-lbl">Career Outcomes</p>
+                    <div class="career-chips">${careers}</div>
+                    ${rec.expectedSalary ? `<div class="salary-badge">${escapeHtml(rec.expectedSalary)}</div>` : ''}
+                  </div>
+                  ${courses ? `<div style="margin-top:8px">
+                    <p class="section-lbl">Major Courses</p>
+                    <div class="course-chips">${courses}</div>
+                  </div>` : ''}
+                  ${unis ? `<div class="uni-section"><p class="section-lbl">Top Universities in Pakistan</p>${unis}</div>` : ''}
+                </div>
+                <div class="rec-side">
+                  <div class="breakdown-grid">
+                    <div class="bd-item"><p class="bd-label">Academic</p><p class="bd-val">${formatBreakdownValue(bd.academic, '-')}</p></div>
+                    <div class="bd-item"><p class="bd-label">Interests</p><p class="bd-val">${formatBreakdownValue(bd.interests, '-')}</p></div>
+                    <div class="bd-item"><p class="bd-label">Skills</p><p class="bd-val">${formatBreakdownValue(bd.skills, '-')}</p></div>
+                    <div class="bd-item"><p class="bd-label">Career</p><p class="bd-val">${formatBreakdownValue(bd.career, '-')}</p></div>
+                    <div class="bd-item"><p class="bd-label">Budget</p><p class="bd-val">${formatBreakdownValue(bd.constraints, '-')}</p></div>
+                    <div class="bd-item"><p class="bd-label">Feedback</p><p class="bd-val">${formatBreakdownValue(bd.feedback, '+0/20')}</p></div>
+                  </div>
+                  <div class="rec-actions">
+                    <button class="btn-like ${isLiked ? 'selected' : ''}" onclick="setDegreeFeedback('${degreeId}','like')">Like</button>
+                    <button class="btn-dislike ${isDisliked ? 'selected' : ''}" onclick="setDegreeFeedback('${degreeId}','dislike')">Dislike</button>
+                    ${
+                      isEnrolled
+                        ? `<button class="btn-enroll" disabled>Enrolled</button>
+                           <button class="btn-unenroll" onclick="unenrollDegree('${degreeId}')">Unenroll</button>`
+                        : `<button class="btn-enroll" ${canEnroll ? '' : 'disabled'} onclick="enrollDegree('${degreeId}')">${canEnroll ? 'Enroll Degree' : 'Limit Reached'}</button>`
+                    }
+                    <span class="enroll-count">Enrollments: ${state.enrolledDegreeIds.size}/${state.maxEnrollments}</span>
+                  </div>
+                </div>
               </div>
-              ${unis ? `<div class="uni-section"><p class="section-lbl">🏛️ Top Universities in Pakistan</p>${unis}</div>` : ''}
             </div>`
           })
+          .join('')
+      }
+
+      window.onload = async () => {
+        try {
+          await loadFeedbackState()
+          await loadEnrollmentState()
+          await render()
         } catch (e) {
           document.getElementById('recommendationsList').innerHTML =
             '<p class="error-text">Error loading recommendations. Please try again.</p>'

@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "frontend": "node tools/static-server.js",
+    "frontend:dev": "node tools/static-server.js"
+  },
   "devDependencies": {
     "nodemon": "^3.1.14"
   }

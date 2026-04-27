@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Manage Students - Admin</title>
     <link rel="stylesheet" href="../css/style.css" />
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/config.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -85,8 +87,11 @@
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="navLinks">
-        <a href="admin-dashboard.html">Dashboard</a>
-        <a href="admin-courses.html">Courses</a>
+        <a href="admin-dashboard.html">Overview</a>
+        <a href="admin-degrees.html">Manage Degrees</a>
+        <a href="admin-courses.html">Manage Courses</a>
+        <a href="admin-students.html">Students</a>
+        <a href="admin-enrollments.html">Enrollments</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -118,8 +123,7 @@
     </div>
 
     <script>
-      const API =
-        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
+      const API = window.APP_CONFIG.API_BASE_URL
       const token = localStorage.getItem('token')
       if (!token) window.location.href = 'login.html'
 
@@ -153,12 +157,6 @@
         }
       }
 
-      function cgpaClass(value) {
-        if (value >= 3.5) return 'cgpa-high'
-        if (value >= 2.5) return 'cgpa-mid'
-        return 'cgpa-low'
-      }
-
       function renderStudents(students) {
         const list = document.getElementById('studentsList')
 
@@ -169,14 +167,20 @@
 
         list.innerHTML = ''
         students.forEach((student) => {
-          const cgpa = Number.parseFloat(student.cgpa) || 0
+          const education = student.educationLevel || 'N/A'
+          const majorStream = student.majorStream || 'N/A'
+          const careerGoal = student.careerGoal || '-'
+          const budget = student.budget || 'N/A'
+          const scholarship = student.needsScholarship ? 'Yes' : 'No'
+          const activeEnrollments = student.activeDegreeEnrollments ?? 0
+          const interestTags = (student.interestAreas || []).slice(0, 5)
           list.innerHTML += `
             <div class="student-row">
               <div class="student-profile">
                 <div class="avatar-initial">${student.name.charAt(0).toUpperCase()}</div>
                 <div>
                   <p class="row-title">${student.name}</p>
-                  <p class="row-meta">${student.email}</p>
+                  <p class="row-meta">${student.email} - ${education} - ${majorStream}</p>
                 </div>
               </div>
               <div class="student-cell">
@@ -184,20 +188,26 @@
                 <p class="value">${student.studentId}</p>
               </div>
               <div class="student-cell">
-                <p class="label">Department</p>
-                <p class="value">${student.department}</p>
+                <p class="label">Active Enrollments</p>
+                <p class="value">${activeEnrollments}</p>
               </div>
               <div class="student-cell">
-                <p class="label">Semester</p>
-                <p class="value">${student.semester}</p>
+                <p class="label">Budget</p>
+                <p class="value">${budget}</p>
               </div>
               <div class="student-cell">
-                <p class="label">CGPA</p>
-                <p class="value ${cgpaClass(cgpa)}">${cgpa.toFixed(2)}</p>
+                <p class="label">Scholarship</p>
+                <p class="value">${scholarship}</p>
               </div>
               <div class="student-cell career-goal-cell">
                 <p class="label">Career Goal</p>
-                <p class="value">${student.careerGoal || '-'}</p>
+                <p class="value">${careerGoal}</p>
+              </div>
+              <div class="student-cell">
+                <p class="label">Interests</p>
+                <div class="tag-list">
+                  ${interestTags.length ? interestTags.map((tag) => `<span class="tag">${tag}</span>`).join('') : '<span class="value">-</span>'}
+                </div>
               </div>
               <div class="row-actions">
                 <button
@@ -218,7 +228,9 @@
           (s) =>
             s.name.toLowerCase().includes(query) ||
             s.email.toLowerCase().includes(query) ||
-            s.studentId.toLowerCase().includes(query),
+            s.studentId.toLowerCase().includes(query) ||
+            (s.majorStream || '').toLowerCase().includes(query) ||
+            (s.careerGoal || '').toLowerCase().includes(query),
         )
         document.getElementById('studentCount').textContent =
           `${filtered.length} students`

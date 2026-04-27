@@ -1,44 +1,170 @@
 const Student = require('../models/Student')
-const Enrollment = require('../models/Enrollment')
+const Degree = require('../models/Degree')
+const Preference = require('../models/Preference')
+const DegreeEnrollment = require('../models/DegreeEnrollment')
+const asyncHandler = require('../middleware/asyncHandler')
 
-// Get all students
-const getAllStudents = async (req, res) => {
-  try {
-    const students = await Student.find({ role: 'student' }).select('-password')
-    res.json(students)
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
+const ACTIVE_STATUS_QUERY = {
+  $or: [{ status: 'enrolled' }, { status: 'active' }, { status: { $exists: false } }],
 }
 
-// Get all enrollments
-const getAllEnrollments = async (req, res) => {
-  try {
-    const enrollments = await Enrollment.find()
-      .populate('student', 'name email studentId')
-      .populate('course', 'courseCode title')
+const getAllStudents = asyncHandler(async (req, res) => {
+    const [students, enrollmentCounts] = await Promise.all([
+      Student.find({ role: 'student' }).select('-password').sort({ createdAt: -1 }).lean(),
+      DegreeEnrollment.aggregate([
+        { $match: ACTIVE_STATUS_QUERY },
+        {
+          $group: {
+            _id: '$student',
+            activeDegreeEnrollments: { $sum: 1 },
+            latestDegreeEnrollmentAt: { $max: '$enrolledAt' },
+          },
+        },
+      ]),
+    ])
+
+    const enrollmentMap = new Map(
+      enrollmentCounts.map((entry) => [String(entry._id), entry]),
+    )
+
+    const enrichedStudents = students.map((student) => {
+      const stats = enrollmentMap.get(String(student._id))
+      return {
+        ...student,
+        activeDegreeEnrollments: stats?.activeDegreeEnrollments || 0,
+        latestDegreeEnrollmentAt: stats?.latestDegreeEnrollmentAt || null,
+      }
+    })
+
+    res.json(enrichedStudents)
+})
+
+const getAllDegreeEnrollments = asyncHandler(async (req, res) => {
+    const status = (req.query.status || 'enrolled').toLowerCase()
+    const allowed = new Set(['enrolled', 'removed', 'all'])
+    if (!allowed.has(status)) {
+      return res.status(400).json({ message: 'Invalid enrollment status filter' })
+    }
+
+    const filter =
+      status === 'all'
+        ? {}
+        : status === 'enrolled'
+          ? ACTIVE_STATUS_QUERY
+          : { status }
+
+    const enrollments = await DegreeEnrollment.find(filter)
+      .populate(
+        'student',
+        'name email studentId majorStream careerGoal budget needsScholarship',
+      )
+      .populate('degree', 'name shortName field duration')
+      .sort({ enrolledAt: -1, updatedAt: -1 })
+      .lean()
+
     res.json(enrollments)
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
+})
 
-// Delete student
-const deleteStudent = async (req, res) => {
-  try {
+const updateDegreeEnrollmentStatus = asyncHandler(async (req, res) => {
+    const { status } = req.body
+    const allowed = new Set(['enrolled', 'removed'])
+    if (!allowed.has(status)) {
+      return res.status(400).json({ message: 'Invalid enrollment status' })
+    }
+
+    const enrollment = await DegreeEnrollment.findById(req.params.id)
+      .populate(
+        'student',
+        'name email studentId majorStream careerGoal budget needsScholarship',
+      )
+      .populate('degree', 'name shortName field duration')
+
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Degree enrollment not found' })
+    }
+
+    enrollment.status = status
+    if (status === 'enrolled') {
+      enrollment.enrolledAt = new Date()
+    }
+
+    await enrollment.save()
+    res.json({ message: 'Degree enrollment updated', enrollment })
+})
+
+const getAdminSummary = asyncHandler(async (req, res) => {
+    const [
+      totalDegrees,
+      activeDegrees,
+      totalStudents,
+      totalDegreeEnrollments,
+      scholarshipSeekingStudents,
+      recentEnrollments,
+      recentStudents,
+      degreesByField,
+    ] = await Promise.all([
+      Degree.countDocuments(),
+      Degree.countDocuments({ isActive: true }),
+      Student.countDocuments({ role: 'student' }),
+      DegreeEnrollment.countDocuments(ACTIVE_STATUS_QUERY),
+      Student.countDocuments({ role: 'student', needsScholarship: true }),
+      DegreeEnrollment.find(ACTIVE_STATUS_QUERY)
+        .populate('student', 'name studentId')
+        .populate('degree', 'name shortName field')
+        .sort({ enrolledAt: -1, updatedAt: -1 })
+        .limit(6)
+        .lean(),
+      Student.find({ role: 'student' })
+        .select('name studentId majorStream interestAreas careerGoal createdAt')
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .lean(),
+      Degree.aggregate([
+        { $group: { _id: '$field', total: { $sum: 1 } } },
+        { $sort: { total: -1, _id: 1 } },
+      ]),
+    ])
+
+    res.json({
+      counts: {
+        totalDegrees,
+        activeDegrees,
+        inactiveDegrees: totalDegrees - activeDegrees,
+        totalStudents,
+        totalDegreeEnrollments,
+        scholarshipSeekingStudents,
+      },
+      recentEnrollments,
+      recentStudents,
+      degreesByField: degreesByField.map((entry) => ({
+        field: entry._id || 'Uncategorized',
+        total: entry.total,
+      })),
+    })
+})
+
+const deleteStudent = asyncHandler(async (req, res) => {
     const student = await Student.findById(req.params.id)
     if (!student) {
       return res.status(404).json({ message: 'Student not found' })
     }
-    await Student.findByIdAndDelete(req.params.id)
-    res.json({ message: 'Student deleted successfully' })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
+
+    await Promise.all([
+      Student.findByIdAndDelete(req.params.id),
+      Preference.deleteOne({ student: req.params.id }),
+      DegreeEnrollment.deleteMany({ student: req.params.id }),
+    ])
+
+    res.json({
+      message: 'Student and related recommendation data deleted successfully',
+    })
+})
 
 module.exports = {
+  getAdminSummary,
   getAllStudents,
-  getAllEnrollments,
+  getAllEnrollments: getAllDegreeEnrollments,
+  getAllDegreeEnrollments,
+  updateDegreeEnrollmentStatus,
   deleteStudent,
 }

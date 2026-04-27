@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Register - Course Recommender</title>
+    <title>Register - Degree Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/config.js"></script>
     <style>
       .step-indicator {
         display: flex;
@@ -133,7 +135,7 @@
     <div class="auth-container">
       <div class="auth-box auth-box-wide">
         <div class="auth-logo">
-          <div class="logo-icon">Course Recommender</div>
+          <div class="logo-icon">Degree Recommender</div>
         </div>
         <h2>Create Your Account</h2>
         <p class="subtitle">
@@ -558,8 +560,7 @@
     </div>
 
     <script>
-      const API =
-        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
+      const API = window.APP_CONFIG.API_BASE_URL
 
       if (localStorage.getItem('token')) {
         window.location.href = 'dashboard.html'

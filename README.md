@@ -1,35 +1,35 @@
-# AI-Based Intelligent Course Recommendation System
+# AI-Based Degree Recommendation System
 
 **Project Code:** KHSIP-2026-MG-0004
 
 ## Overview
 
-A full-stack web application that uses AI (content-based filtering)
-to recommend personalized courses to students based on their
-academic profile, interests, and career goals.
+A full-stack academic guidance platform that helps students identify the most suitable degree programs based on academic background, interests, strengths, career goals, and practical constraints. Each recommendation also surfaces linked courses so students can understand the pathway inside a degree before enrolling.
 
-## Features
+## Core Features
 
-- JWT Authentication (Register/Login)
-- AI Recommendation Engine with scoring
-- Course enrollment system
-- Grade tracking with auto CGPA calculation
-- Feedback loop (like/dislike improves recommendations)
-- Responsive web frontend
+- JWT-based student authentication
+- Degree recommendation engine with weighted scoring
+- Degree-specific course pathway suggestions
+- Degree enrollment with duplicate prevention and restore flow
+- Degree feedback loop through like and dislike actions
+- Admin management for degrees, courses, students, and enrollments
+- Responsive static web frontend
 
 ## Tech Stack
 
 - **Frontend:** HTML, CSS, JavaScript
 - **Backend:** Node.js, Express.js
 - **Database:** MongoDB
-- **Auth:** JWT + bcryptjs
+- **Authentication:** JWT + bcryptjs
+- **Deployment Targets:** Vercel, Railway, MongoDB Atlas
 
-## Setup Instructions
+## Local Setup
 
 ### Prerequisites
 
-- Node.js installed
-- MongoDB installed locally
+- Node.js 20+
+- MongoDB running locally
 
 ### Installation
 
@@ -42,10 +42,14 @@ npm install
 
 Create `backend/.env`:
 
-```
+```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/course_recommender
-JWT_SECRET=course_recommender_secret_key_2026
+MONGO_URI=mongodb://localhost:27017/degree_recommender
+JWT_SECRET=replace-with-a-long-random-secret-at-least-32-characters
+JWT_EXPIRES_IN=7d
+CORS_ORIGINS=http://localhost:5500
+API_RATE_LIMIT_MAX=300
+AUTH_RATE_LIMIT_MAX=20
 ```
 
 ### Run
@@ -56,41 +60,66 @@ mongod
 
 # Start backend
 cd backend
+npm install
 npm run dev
 
-# Open frontend
-Open frontend/pages/login.html with Live Server
+# Seed sample degree data (optional)
+npm run seed:degrees
+npm run seed:courses
+
+# Open frontend from the repo root
+npm run frontend
 ```
 
 ## API Base URL
 
 `http://localhost:5000/api`
 
+## Quality Checks
+
+```bash
+cd backend
+npm run check
+npm test
+npm audit --omit=dev
+```
+
+## Deployment Targets
+
+- Frontend: Vercel
+- Backend API: Railway
+- Database: MongoDB Atlas
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the production deployment flow.
+
 ## Project Structure
 
+```text
+Degree_recommendation_system/
+|-- backend/
+|   |-- config/        # Database and environment setup
+|   |-- controllers/   # API request handlers
+|   |-- middleware/    # Auth, validation, and error handling
+|   |-- models/        # MongoDB schemas
+|   |-- routes/        # REST API endpoints
+|   |-- utils/         # Degree recommendation engine
+|   `-- server.js      # Backend entry point
+|-- frontend/
+|   |-- css/           # Stylesheets
+|   |-- js/            # Runtime config and page logic
+|   `-- pages/         # Static HTML pages
+|-- docs/              # Project documentation
+`-- tools/             # Local development utilities
 ```
-course-recommender/
-├── backend/
-│   ├── config/        # Database connection
-│   ├── models/        # MongoDB schemas
-│   ├── routes/        # API endpoints
-│   ├── controllers/   # Business logic
-│   ├── middleware/    # Auth + validation
-│   ├── utils/         # Recommendation engine
-│   └── server.js
-├── frontend/
-│   ├── css/           # Styles
-│   ├── pages/         # HTML pages
-└── docs/              # Documentation
-```
 
-## Recommendation Algorithm
+## Recommendation Logic
 
-Scores each course based on:
+Degrees are scored using weighted factors:
 
-- Interest matching (+20 per match)
-- Career goal alignment (+25)
-- Skill level compatibility (+15)
-- Grade performance in similar courses (+10)
-- Student feedback/preferences (+30 for liked)
-- Course success rate and rating (+10)
+- Academic match: 40%
+- Interest match: 30%
+- Skills and learning style: 15%
+- Career alignment: 10%
+- Constraints: 5%
+
+Feedback from liked and disliked degrees is then applied as an additional adjustment layer before the final ranked results are returned.

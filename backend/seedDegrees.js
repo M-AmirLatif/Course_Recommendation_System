@@ -1,4 +1,4 @@
-// Run this once to populate degrees in MongoDB Atlas
+// Run this once to populate degrees in your local MongoDB instance
 // node backend/seedDegrees.js
 
 const mongoose = require('mongoose')
@@ -760,7 +760,7 @@ const degrees = [
 
 const seedDegrees = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI)
+    await mongoose.connect(process.env.MONGO_URI)
     console.log('Connected to MongoDB')
 
     await Degree.deleteMany({})

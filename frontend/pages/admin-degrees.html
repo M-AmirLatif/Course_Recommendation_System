@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Degrees - Admin</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/config.js"></script>
+    <style>
+      .degree-admin-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+        gap: 18px;
+        align-items: start;
+      }
+      .degree-form .form-grid {
+        align-items: end;
+        gap: 14px;
+      }
+      .degree-side {
+        display: grid;
+        gap: 16px;
+      }
+      .sticky-card {
+        position: sticky;
+        top: 96px;
+      }
+      .form-section {
+        margin-top: 18px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.14);
+        background: rgba(15, 23, 42, 0.32);
+      }
+      .form-section h3 {
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+      .form-section .section-note {
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .form-grid .full-span {
+        grid-column: 1 / -1;
+      }
+      .university-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: end;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(10, 18, 36, 0.4);
+        margin-bottom: 10px;
+      }
+      .university-row .full-span {
+        grid-column: 1 / -1;
+      }
+      .university-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip-row label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(15, 23, 42, 0.4);
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .chip-row input {
+        accent-color: #60a5fa;
+      }
+      .degree-form .form-group textarea {
+        width: 100%;
+        min-height: 110px;
+        resize: none;
+        padding: 13px 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(133, 158, 196, 0.24);
+        background: linear-gradient(
+          155deg,
+          rgba(12, 24, 50, 0.82),
+          rgba(23, 40, 70, 0.66)
+        );
+        font-size: 15px;
+        font-family: 'DM Sans', sans-serif;
+        color: #e5efff;
+        outline: none;
+        transition: all 0.2s;
+      }
+      .degree-form .form-group textarea::placeholder {
+        color: #8fa7cb;
+      }
+      .degree-form .form-group textarea:focus {
+        border-color: rgba(96, 165, 250, 0.72);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+      }
+      .preview-card {
+        border: 1px solid rgba(133, 158, 196, 0.24);
+      }
+      .preview-card h3 {
+        margin-bottom: 8px;
+      }
+      .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .preview-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .preview-subtitle {
+        color: var(--text-muted);
+        font-size: 12px;
+      }
+      .preview-description {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin: 10px 0 12px;
+      }
+      .status-pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+      }
+      .status-pill.active {
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .status-pill.inactive {
+        background: rgba(148, 163, 184, 0.12);
+        color: #cbd5e1;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .preview-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .preview-meta {
+        padding: 10px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(148, 163, 184, 0.12);
+      }
+      .preview-meta span {
+        display: block;
+        font-size: 11px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 4px;
+      }
+      .preview-meta strong {
+        font-size: 14px;
+      }
+      .preview-section {
+        margin-top: 12px;
+      }
+      .preview-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .preview-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .preview-tag {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        background: rgba(59, 130, 246, 0.12);
+        border: 1px solid rgba(96, 165, 250, 0.3);
+        color: #bfdbfe;
+      }
+      .preview-snapshot {
+        display: grid;
+        gap: 10px;
+      }
+      .preview-snapshot-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .preview-snapshot-item strong {
+        color: var(--text);
+      }
+      @media (min-width: 1100px) {
+        .university-row {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .university-row .full-span {
+          grid-column: 1 / -1;
+        }
+      }
+      @media (max-width: 980px) {
+        .degree-admin-layout {
+          grid-template-columns: 1fr;
+        }
+        .sticky-card {
+          position: static;
+        }
+      }
+    </style>
+  </head>
+  <body class="page-admin page-admin-courses">
+    <div class="navbar">
+      <span class="logo">Degree Admin Panel</span>
+      <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="admin-dashboard.html">Overview</a>
+        <a href="admin-degrees.html">Manage Degrees</a>
+        <a href="admin-courses.html">Manage Courses</a>
+        <a href="admin-students.html">Students</a>
+        <a href="admin-enrollments.html">Enrollments</a>
+        <a href="#" class="btn-logout" onclick="logout()">Logout</a>
+      </div>
+    </div>
+
+    <div class="dashboard content-stack">
+      <div class="page-header">
+        <h1>Manage Degrees</h1>
+        <p class="subtitle">
+          Add and maintain the degree catalog used by recommendations.
+        </p>
+      </div>
+
+      <div class="degree-admin-layout">
+      <section class="glass-panel admin-courses-form degree-form">
+        <h2 id="formTitle">Add New Degree</h2>
+        <div class="alert alert-error" id="errorAlert"></div>
+        <div class="alert alert-success" id="successAlert"></div>
+
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label for="name">Degree Name</label>
+            <input id="name" type="text" placeholder="BS Computer Science" />
+          </div>
+          <div class="form-group">
+            <label for="shortName">Short Name</label>
+            <input id="shortName" type="text" placeholder="BSCS" />
+          </div>
+        </div>
+
+        <div class="form-grid form-grid-2">
+          <div class="form-group">
+            <label for="field">Field</label>
+            <input id="field" type="text" placeholder="Technology" />
+          </div>
+          <div class="form-group">
+            <label for="duration">Duration</label>
+            <input id="duration" type="text" placeholder="4 years" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            placeholder="Describe the degree, focus, and outcomes"
+          ></textarea>
+        </div>
+
+        <div class="form-section">
+          <h3>Requirements</h3>
+          <p class="section-note">
+            Define the minimum requirements and stream fit for this degree.
+          </p>
+          <div class="form-grid form-grid-3">
+            <div class="form-group">
+              <label for="minGPA">Minimum GPA</label>
+              <input id="minGPA" type="number" step="0.1" placeholder="2.5" />
+            </div>
+            <div class="form-group">
+              <label for="requiredSubjects">Required Subjects</label>
+              <input
+                id="requiredSubjects"
+                type="text"
+                placeholder="Mathematics, Physics"
+              />
+            </div>
+            <div class="form-group full-span">
+              <label>Required Stream</label>
+              <div class="chip-row" id="requiredStream">
+                <label><input type="checkbox" value="science" />Science</label>
+                <label><input type="checkbox" value="commerce" />Commerce</label>
+                <label><input type="checkbox" value="arts" />Arts</label>
+                <label><input type="checkbox" value="technology" />Technology</label>
+                <label><input type="checkbox" value="any" />Any</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Matching Profile</h3>
+          <p class="section-note">
+            Align these signals with the ideal student profile for higher accuracy.
+          </p>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label for="idealInterestAreas">Ideal Interest Areas</label>
+              <input
+                id="idealInterestAreas"
+                type="text"
+                placeholder="Technology, Research"
+              />
+            </div>
+            <div class="form-group">
+              <label for="idealActivities">Ideal Activities</label>
+              <input
+                id="idealActivities"
+                type="text"
+                placeholder="Problem Solving, Communication"
+              />
+            </div>
+          </div>
+          <div class="form-grid form-grid-3">
+            <div class="form-group">
+              <label for="idealAnalytical">Ideal Analytical</label>
+              <select id="idealAnalytical">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="idealCreativity">Ideal Creativity</label>
+              <select id="idealCreativity">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="workType">Work Type</label>
+              <select id="workType">
+                <option value="theory">Theory</option>
+                <option value="practical">Practical</option>
+                <option value="both" selected>Both</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Outcomes</h3>
+          <p class="section-note">
+            Outcomes appear in recommendation explanations for students.
+          </p>
+          <div class="form-grid form-grid-2">
+            <div class="form-group">
+              <label for="careerOutcomes">Career Outcomes</label>
+              <input
+                id="careerOutcomes"
+                type="text"
+                placeholder="Software Engineer, Data Scientist"
+              />
+            </div>
+            <div class="form-group">
+              <label for="expectedSalary">Expected Salary</label>
+              <input id="expectedSalary" type="text" placeholder="PKR 80k - 200k" />
+            </div>
+          </div>
+          <div class="form-grid form-grid-3">
+            <div class="form-group">
+              <label for="jobMarket">Job Market</label>
+              <select id="jobMarket">
+                <option value="excellent">Excellent</option>
+                <option value="good" selected>Good</option>
+                <option value="moderate">Moderate</option>
+                <option value="limited">Limited</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="successRate">Success Rate (%)</label>
+              <input id="successRate" type="number" min="0" max="100" />
+            </div>
+            <div class="form-group">
+              <label for="averageRating">Average Rating (0-5)</label>
+              <input id="averageRating" type="number" min="0" max="5" step="0.1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Universities</h3>
+          <p class="section-note">
+            Add universities and scholarship availability to guide constraints.
+          </p>
+          <div id="universitiesList"></div>
+          <div class="button-row" style="margin-top:10px">
+            <button class="btn btn-secondary btn-auto" onclick="addUniversityRow()">
+              Add University
+            </button>
+          </div>
+        </div>
+
+        <div class="form-grid form-grid-2" style="margin-top:16px">
+          <div class="form-group">
+            <label for="isActive">Visible in Recommendations</label>
+            <select id="isActive">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn btn-primary btn-auto" onclick="saveDegree()">
+            Save Degree
+          </button>
+          <button class="btn btn-secondary btn-auto" onclick="resetForm()">
+            Cancel
+          </button>
+        </div>
+      </section>
+
+      <aside class="degree-side">
+        <section class="glass-panel preview-card sticky-card">
+          <div class="preview-header">
+            <div>
+              <p class="preview-title" id="previewName">Degree Name</p>
+              <p class="preview-subtitle" id="previewSubtitle">
+                Short Name • Field
+              </p>
+            </div>
+            <span class="status-pill active" id="previewStatus">Active</span>
+          </div>
+          <p class="preview-description" id="previewDescription">
+            Add a clear summary so students understand the degree focus.
+          </p>
+
+          <div class="preview-meta-grid">
+            <div class="preview-meta">
+              <span>Duration</span>
+              <strong id="previewDuration">-</strong>
+            </div>
+            <div class="preview-meta">
+              <span>Min GPA</span>
+              <strong id="previewGpa">-</strong>
+            </div>
+            <div class="preview-meta">
+              <span>Work Type</span>
+              <strong id="previewWorkType">-</strong>
+            </div>
+            <div class="preview-meta">
+              <span>Job Market</span>
+              <strong id="previewJobMarket">-</strong>
+            </div>
+            <div class="preview-meta">
+              <span>Success Rate</span>
+              <strong id="previewSuccessRate">-</strong>
+            </div>
+            <div class="preview-meta">
+              <span>Rating</span>
+              <strong id="previewRating">-</strong>
+            </div>
+          </div>
+
+          <div class="preview-section">
+            <div class="preview-label">Required Stream</div>
+            <div id="previewStream" class="preview-tags"></div>
+          </div>
+          <div class="preview-section">
+            <div class="preview-label">Required Subjects</div>
+            <div id="previewSubjects" class="preview-tags"></div>
+          </div>
+          <div class="preview-section">
+            <div class="preview-label">Ideal Interest Areas</div>
+            <div id="previewInterests" class="preview-tags"></div>
+          </div>
+          <div class="preview-section">
+            <div class="preview-label">Ideal Activities</div>
+            <div id="previewActivities" class="preview-tags"></div>
+          </div>
+          <div class="preview-section">
+            <div class="preview-label">Fit Traits</div>
+            <div id="previewTraits" class="preview-tags"></div>
+          </div>
+          <div class="preview-section">
+            <div class="preview-label">Career Outcomes</div>
+            <div id="previewCareers" class="preview-tags"></div>
+          </div>
+        </section>
+
+        <section class="glass-panel preview-card">
+          <h3>Degree Snapshot</h3>
+          <div class="preview-snapshot">
+            <div class="preview-snapshot-item">
+              <span>Universities</span>
+              <strong id="previewUniCount">0</strong>
+            </div>
+            <div class="preview-snapshot-item">
+              <span>Scholarships</span>
+              <strong id="previewScholarshipCount">0</strong>
+            </div>
+            <div class="preview-snapshot-item">
+              <span>Expected Salary</span>
+              <strong id="previewSalary">-</strong>
+            </div>
+          </div>
+        </section>
+      </aside>
+      </div>
+
+      <section class="glass-panel admin-courses-list">
+        <h2>Degree Catalog</h2>
+        <div id="degreeList">
+          <p class="empty-text">Loading degrees...</p>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const API = window.APP_CONFIG.API_BASE_URL
+      const token = localStorage.getItem('token')
+      if (!token) window.location.href = 'login.html'
+
+      const headers = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      }
+
+      let editingDegreeId = null
+
+      window.onload = () => {
+        addUniversityRow()
+        attachPreviewListeners()
+        syncPreview()
+        loadDegrees()
+      }
+
+      function readCheckboxValues(containerId) {
+        return Array.from(document.querySelectorAll(`#${containerId} input:checked`)).map(
+          (input) => input.value,
+        )
+      }
+
+      function toList(value) {
+        return (value || '')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+      }
+
+      function formatLabel(value) {
+        if (!value) return '-'
+        const text = String(value)
+        return text.charAt(0).toUpperCase() + text.slice(1)
+      }
+
+      function renderPreviewTags(containerId, items) {
+        const el = document.getElementById(containerId)
+        if (!el) return
+        if (!items.length) {
+          el.innerHTML = '<span class="preview-tag">-</span>'
+          return
+        }
+        el.innerHTML = items
+          .slice(0, 8)
+          .map((item) => `<span class="preview-tag">${item}</span>`)
+          .join('')
+      }
+
+      function syncPreview() {
+        const name = document.getElementById('name').value.trim() || 'Degree Name'
+        const shortName = document.getElementById('shortName').value.trim() || 'Short Name'
+        const field = document.getElementById('field').value.trim() || 'Field'
+        const duration = document.getElementById('duration').value.trim() || '-'
+        const description =
+          document.getElementById('description').value.trim() ||
+          'Add a clear summary so students understand the degree focus.'
+        const minGpa = document.getElementById('minGPA').value || '-'
+        const workType = formatLabel(document.getElementById('workType').value)
+        const jobMarket = formatLabel(document.getElementById('jobMarket').value)
+        const successRateRaw = document.getElementById('successRate').value
+        const ratingRaw = document.getElementById('averageRating').value
+        const successRate = successRateRaw ? `${successRateRaw}%` : '-'
+        const rating = ratingRaw ? `${ratingRaw} / 5` : '-'
+        const idealAnalytical = formatLabel(document.getElementById('idealAnalytical').value)
+        const idealCreativity = formatLabel(document.getElementById('idealCreativity').value)
+        const expectedSalary = document.getElementById('expectedSalary').value.trim() || '-'
+        const isActive = document.getElementById('isActive').value === 'true'
+
+        document.getElementById('previewName').textContent = name
+        document.getElementById('previewSubtitle').textContent = `${shortName} • ${field}`
+        document.getElementById('previewSubtitle').textContent = `${shortName} | ${field}`
+        document.getElementById('previewDescription').textContent = description
+        document.getElementById('previewDuration').textContent = duration
+        document.getElementById('previewGpa').textContent = minGpa
+        document.getElementById('previewWorkType').textContent = workType
+        document.getElementById('previewJobMarket').textContent = jobMarket
+        document.getElementById('previewSuccessRate').textContent = successRate
+        document.getElementById('previewRating').textContent = rating
+        document.getElementById('previewSalary').textContent = expectedSalary
+
+        const statusEl = document.getElementById('previewStatus')
+        statusEl.textContent = isActive ? 'Active' : 'Inactive'
+        statusEl.classList.toggle('active', isActive)
+        statusEl.classList.toggle('inactive', !isActive)
+
+        renderPreviewTags('previewStream', readCheckboxValues('requiredStream'))
+        renderPreviewTags('previewSubjects', toList(document.getElementById('requiredSubjects').value))
+        renderPreviewTags('previewInterests', toList(document.getElementById('idealInterestAreas').value))
+        renderPreviewTags('previewActivities', toList(document.getElementById('idealActivities').value))
+        renderPreviewTags('previewTraits', [
+          `Analytical: ${idealAnalytical}`,
+          `Creativity: ${idealCreativity}`,
+        ])
+        renderPreviewTags('previewCareers', toList(document.getElementById('careerOutcomes').value))
+
+        const universities = collectUniversities()
+        const scholarshipCount = universities.filter((u) => u.hasScholarship).length
+        document.getElementById('previewUniCount').textContent = universities.length
+        document.getElementById('previewScholarshipCount').textContent = scholarshipCount
+      }
+
+      function attachPreviewListeners() {
+        document
+          .querySelectorAll(
+            '.degree-form input, .degree-form select, .degree-form textarea',
+          )
+          .forEach((el) => {
+            el.addEventListener('input', syncPreview)
+            el.addEventListener('change', syncPreview)
+          })
+      }
+
+      function bindUniversityRow(row) {
+        row
+          .querySelectorAll('input, select, textarea')
+          .forEach((el) => {
+            el.addEventListener('input', syncPreview)
+            el.addEventListener('change', syncPreview)
+          })
+      }
+
+      function addUniversityRow(data = {}) {
+        const list = document.getElementById('universitiesList')
+        const row = document.createElement('div')
+        row.className = 'university-row'
+        row.innerHTML = `
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="uni-name" value="${data.name || ''}" />
+          </div>
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" class="uni-location" value="${data.location || ''}" />
+          </div>
+          <div class="form-group">
+            <label>Ranking</label>
+            <input type="number" class="uni-ranking" value="${data.ranking || ''}" />
+          </div>
+          <div class="form-group">
+            <label>Fee / Year</label>
+            <input type="text" class="uni-fee" value="${data.feePerYear || ''}" />
+          </div>
+          <div class="form-group">
+            <label>Admission Test</label>
+            <input type="text" class="uni-test" value="${data.admissionTest || ''}" />
+          </div>
+          <div class="form-group">
+            <label>Website</label>
+            <input type="text" class="uni-website" value="${data.website || ''}" />
+          </div>
+          <div class="form-group full-span">
+            <label><input type="checkbox" class="uni-scholarship" ${
+              data.hasScholarship ? 'checked' : ''
+            } /> Scholarship Available</label>
+          </div>
+          <div class="university-actions full-span">
+            <button class="admin-action-btn btn-delete" type="button" onclick="removeUniversityRow(this)">Remove</button>
+          </div>
+        `
+        list.appendChild(row)
+        bindUniversityRow(row)
+        syncPreview()
+      }
+
+      function removeUniversityRow(button) {
+        const row = button.closest('.university-row')
+        if (row) row.remove()
+        syncPreview()
+      }
+
+      function collectUniversities() {
+        return Array.from(document.querySelectorAll('.university-row')).map((row) => ({
+          name: row.querySelector('.uni-name').value.trim(),
+          location: row.querySelector('.uni-location').value.trim(),
+          ranking: Number(row.querySelector('.uni-ranking').value) || undefined,
+          feePerYear: row.querySelector('.uni-fee').value.trim(),
+          admissionTest: row.querySelector('.uni-test').value.trim(),
+          website: row.querySelector('.uni-website').value.trim(),
+          hasScholarship: row.querySelector('.uni-scholarship').checked,
+        }))
+      }
+
+      async function loadDegrees() {
+        const res = await fetch(`${API}/degrees?all=1`, { headers })
+        const degrees = await res.json()
+
+        const list = document.getElementById('degreeList')
+        if (!Array.isArray(degrees) || degrees.length === 0) {
+          list.innerHTML = '<p class="empty-text">No degrees available.</p>'
+          return
+        }
+
+        list.innerHTML = ''
+        degrees.forEach((degree) => {
+          list.innerHTML += `
+            <div class="data-row">
+              <div class="data-main">
+                <p class="row-title">${degree.name}</p>
+                <div class="course-inline-meta">
+                  <span><strong>${degree.shortName || 'N/A'}</strong></span>
+                  <span>${degree.field || 'General'}</span>
+                  <span>${degree.duration || '-'}</span>
+                  <span>${degree.isActive ? 'Active' : 'Inactive'}</span>
+                </div>
+                <p class="row-meta">${degree.description || ''}</p>
+              </div>
+              <div class="row-actions">
+                <button class="admin-action-btn btn-edit" onclick="editDegree('${degree._id}')">Edit</button>
+                <button class="admin-action-btn btn-delete" onclick="deleteDegree('${degree._id}')">Delete</button>
+              </div>
+            </div>
+          `
+        })
+      }
+
+      async function saveDegree() {
+        const errorAlert = document.getElementById('errorAlert')
+        const successAlert = document.getElementById('successAlert')
+        errorAlert.style.display = 'none'
+        successAlert.style.display = 'none'
+
+        const payload = {
+          name: document.getElementById('name').value.trim(),
+          shortName: document.getElementById('shortName').value.trim(),
+          field: document.getElementById('field').value.trim(),
+          duration: document.getElementById('duration').value.trim(),
+          description: document.getElementById('description').value.trim(),
+          minGPA: Number(document.getElementById('minGPA').value) || 0,
+          requiredSubjects: document
+            .getElementById('requiredSubjects')
+            .value.split(',')
+            .map((v) => v.trim())
+            .filter(Boolean),
+          requiredStream: readCheckboxValues('requiredStream'),
+          idealInterestAreas: document
+            .getElementById('idealInterestAreas')
+            .value.split(',')
+            .map((v) => v.trim())
+            .filter(Boolean),
+          idealActivities: document
+            .getElementById('idealActivities')
+            .value.split(',')
+            .map((v) => v.trim())
+            .filter(Boolean),
+          idealAnalytical: document.getElementById('idealAnalytical').value,
+          idealCreativity: document.getElementById('idealCreativity').value,
+          workType: document.getElementById('workType').value,
+          careerOutcomes: document
+            .getElementById('careerOutcomes')
+            .value.split(',')
+            .map((v) => v.trim())
+            .filter(Boolean),
+          expectedSalary: document.getElementById('expectedSalary').value.trim(),
+          jobMarket: document.getElementById('jobMarket').value,
+          successRate: Number(document.getElementById('successRate').value) || 0,
+          averageRating: Number(document.getElementById('averageRating').value) || 0,
+          universities: collectUniversities(),
+          isActive: document.getElementById('isActive').value === 'true',
+        }
+
+        try {
+          const res = editingDegreeId
+            ? await fetch(`${API}/degrees/${editingDegreeId}`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(payload),
+              })
+            : await fetch(`${API}/degrees`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload),
+              })
+          const data = await res.json()
+          if (!res.ok) {
+            errorAlert.style.display = 'block'
+            errorAlert.textContent = data.message || 'Unable to save degree.'
+            return
+          }
+          successAlert.style.display = 'block'
+          successAlert.textContent = editingDegreeId
+            ? 'Degree updated successfully.'
+            : 'Degree added successfully.'
+          resetForm()
+          loadDegrees()
+        } catch (error) {
+          errorAlert.style.display = 'block'
+          errorAlert.textContent = 'Server error.'
+        }
+      }
+
+      async function editDegree(id) {
+        const res = await fetch(`${API}/degrees/${id}`, { headers })
+        const degree = await res.json()
+
+        document.getElementById('name').value = degree.name || ''
+        document.getElementById('shortName').value = degree.shortName || ''
+        document.getElementById('field').value = degree.field || ''
+        document.getElementById('duration').value = degree.duration || ''
+        document.getElementById('description').value = degree.description || ''
+        document.getElementById('minGPA').value = degree.minGPA || ''
+        document.getElementById('requiredSubjects').value =
+          (degree.requiredSubjects || []).join(', ')
+        document
+          .querySelectorAll('#requiredStream input')
+          .forEach((input) => (input.checked = (degree.requiredStream || []).includes(input.value)))
+        document.getElementById('idealInterestAreas').value =
+          (degree.idealInterestAreas || []).join(', ')
+        document.getElementById('idealActivities').value =
+          (degree.idealActivities || []).join(', ')
+        document.getElementById('idealAnalytical').value = degree.idealAnalytical || 'medium'
+        document.getElementById('idealCreativity').value = degree.idealCreativity || 'medium'
+        document.getElementById('workType').value = degree.workType || 'both'
+        document.getElementById('careerOutcomes').value =
+          (degree.careerOutcomes || []).join(', ')
+        document.getElementById('expectedSalary').value = degree.expectedSalary || ''
+        document.getElementById('jobMarket').value = degree.jobMarket || 'good'
+        document.getElementById('successRate').value = degree.successRate || ''
+        document.getElementById('averageRating').value = degree.averageRating || ''
+        document.getElementById('isActive').value = degree.isActive ? 'true' : 'false'
+
+        const list = document.getElementById('universitiesList')
+        list.innerHTML = ''
+        ;(degree.universities || []).forEach((uni) => addUniversityRow(uni))
+        if (!degree.universities || degree.universities.length === 0) {
+          addUniversityRow()
+        }
+
+        editingDegreeId = id
+        document.getElementById('formTitle').textContent = 'Edit Degree'
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        syncPreview()
+      }
+
+      async function deleteDegree(id) {
+        if (!confirm('Are you sure you want to delete this degree?')) return
+        const res = await fetch(`${API}/degrees/${id}`, {
+          method: 'DELETE',
+          headers,
+        })
+        if (res.ok) loadDegrees()
+      }
+
+      function resetForm() {
+        editingDegreeId = null
+        document.getElementById('formTitle').textContent = 'Add New Degree'
+        document.getElementById('name').value = ''
+        document.getElementById('shortName').value = ''
+        document.getElementById('field').value = ''
+        document.getElementById('duration').value = ''
+        document.getElementById('description').value = ''
+        document.getElementById('minGPA').value = ''
+        document.getElementById('requiredSubjects').value = ''
+        document
+          .querySelectorAll('#requiredStream input')
+          .forEach((input) => (input.checked = false))
+        document.getElementById('idealInterestAreas').value = ''
+        document.getElementById('idealActivities').value = ''
+        document.getElementById('idealAnalytical').value = 'medium'
+        document.getElementById('idealCreativity').value = 'medium'
+        document.getElementById('workType').value = 'both'
+        document.getElementById('careerOutcomes').value = ''
+        document.getElementById('expectedSalary').value = ''
+        document.getElementById('jobMarket').value = 'good'
+        document.getElementById('successRate').value = ''
+        document.getElementById('averageRating').value = ''
+        document.getElementById('isActive').value = 'true'
+        document.getElementById('universitiesList').innerHTML = ''
+        addUniversityRow()
+        syncPreview()
+      }
+
+      function toggleNav() {
+        const nav = document.getElementById('navLinks')
+        const btn = document.querySelector('.nav-toggle')
+        nav.classList.toggle('open')
+        btn.classList.toggle('open')
+      }
+      document.addEventListener('click', function (e) {
+        const nav = document.getElementById('navLinks')
+        const btn = document.querySelector('.nav-toggle')
+        if (!nav.contains(e.target) && !btn.contains(e.target)) {
+          nav.classList.remove('open')
+          btn.classList.remove('open')
+        }
+      })
+
+      function logout() {
+        localStorage.removeItem('token')
+        localStorage.removeItem('studentName')
+        localStorage.removeItem('studentId')
+        window.location.href = 'login.html'
+      }
+    </script>
+  </body>
+</html>

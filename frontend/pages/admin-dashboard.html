@@ -3,8 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard - Course Recommender</title>
+    <title>Admin Dashboard - Degree Recommender</title>
     <link rel="stylesheet" href="../css/style.css" />
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/config.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -85,8 +87,11 @@
         <span></span><span></span><span></span>
       </button>
       <div class="nav-links" id="navLinks">
+        <a href="admin-dashboard.html">Overview</a>
+        <a href="admin-degrees.html">Manage Degrees</a>
         <a href="admin-courses.html">Manage Courses</a>
-        <a href="admin-students.html">View Students</a>
+        <a href="admin-students.html">Students</a>
+        <a href="admin-enrollments.html">Enrollments</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -99,9 +104,14 @@
 
       <div class="cards-grid">
         <div class="card">
-          <div class="card-icon">Courses</div>
-          <h3 id="totalCourses">0</h3>
-          <p>Total Courses</p>
+          <div class="card-icon">Degrees</div>
+          <h3 id="totalDegrees">0</h3>
+          <p>Total Degrees</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">Active</div>
+          <h3 id="activeDegrees">0</h3>
+          <p>Active Degrees</p>
         </div>
         <div class="card">
           <div class="card-icon">Students</div>
@@ -111,27 +121,59 @@
         <div class="card">
           <div class="card-icon">Enrollments</div>
           <h3 id="totalEnrollments">0</h3>
-          <p>Total Enrollments</p>
+          <p>Active Enrollments</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">Scholarship</div>
+          <h3 id="scholarshipStudents">0</h3>
+          <p>Scholarship Requests</p>
         </div>
       </div>
 
       <section class="glass-panel admin-quick-actions">
         <h2>Quick Actions</h2>
         <div class="button-row">
-          <a href="admin-courses.html" class="action-link">Add New Course</a>
+          <a href="admin-degrees.html" class="action-link">Add Degree</a>
+          <a href="admin-courses.html" class="action-link">Add Course</a>
+          <a
+            href="admin-enrollments.html"
+            class="action-link action-link-secondary"
+          >
+            Review Enrollments
+          </a>
           <a
             href="admin-students.html"
             class="action-link action-link-secondary"
           >
-            View All Students
+            View Students
           </a>
         </div>
+      </section>
+
+      <div class="form-grid form-grid-2">
+        <section class="glass-panel">
+          <h2>Recent Degree Enrollments</h2>
+          <div id="recentEnrollments">
+            <p class="empty-text">Loading enrollments...</p>
+          </div>
+        </section>
+
+        <section class="glass-panel">
+          <h2>Recent Students</h2>
+          <div id="recentStudents">
+            <p class="empty-text">Loading students...</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="glass-panel">
+        <h2>Degree Fields Overview</h2>
+        <div id="degreeFields" class="tag-list"></div>
       </section>
     </div>
 
     <script>
-      const API =
-        'https://courserecommendationsystem-production-74ab.up.railway.app/api'
+      const API = window.APP_CONFIG.API_BASE_URL
       const token = localStorage.getItem('token')
 
       if (!token) window.location.href = 'login.html'
@@ -141,19 +183,127 @@
         Authorization: `Bearer ${token}`,
       }
 
-      window.onload = async () => {
-        const coursesRes = await fetch(`${API}/courses`, { headers })
-        const courses = await coursesRes.json()
-        document.getElementById('totalCourses').textContent = courses.length
+      window.onload = () => loadSummary()
 
-        const studentsRes = await fetch(`${API}/admin/students`, { headers })
-        const students = await studentsRes.json()
-        document.getElementById('totalStudents').textContent = students.length
+      function formatDate(value) {
+        if (!value) return '-'
+        const date = new Date(value)
+        return date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      }
 
-        const enrollRes = await fetch(`${API}/admin/enrollments`, { headers })
-        const enrollments = await enrollRes.json()
-        document.getElementById('totalEnrollments').textContent =
-          enrollments.length
+      function escapeHtml(value) {
+        if (value === null || value === undefined) return ''
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;')
+      }
+
+      async function loadSummary() {
+        try {
+          const res = await fetch(`${API}/admin/summary`, { headers })
+          const data = await res.json()
+          if (!res.ok) {
+            throw new Error(data.message || 'Unable to load admin summary')
+          }
+
+          const counts = data.counts || {}
+          document.getElementById('totalDegrees').textContent =
+            counts.totalDegrees ?? 0
+          document.getElementById('activeDegrees').textContent =
+            counts.activeDegrees ?? 0
+          document.getElementById('totalStudents').textContent =
+            counts.totalStudents ?? 0
+          document.getElementById('totalEnrollments').textContent =
+            counts.totalDegreeEnrollments ?? 0
+          document.getElementById('scholarshipStudents').textContent =
+            counts.scholarshipSeekingStudents ?? 0
+
+          const enrollments = data.recentEnrollments || []
+          const enrollmentsEl = document.getElementById('recentEnrollments')
+          if (!enrollments.length) {
+            enrollmentsEl.innerHTML =
+              '<p class="empty-text">No recent enrollments yet.</p>'
+          } else {
+            enrollmentsEl.innerHTML = enrollments
+              .map((item) => {
+                const studentName = item.student?.name || 'Student'
+                const degreeName =
+                  item.degree?.shortName || item.degree?.name || 'Degree'
+                const field = item.degree?.field || 'General'
+                const dateLabel = formatDate(item.enrolledAt || item.updatedAt)
+                return `
+                  <div class="data-row">
+                    <div class="data-main">
+                      <p class="row-title">${escapeHtml(studentName)} enrolled in ${escapeHtml(
+                  degreeName,
+                )}</p>
+                      <p class="row-meta">${escapeHtml(field)} - ${escapeHtml(
+                  dateLabel,
+                )}</p>
+                    </div>
+                  </div>
+                `
+              })
+              .join('')
+          }
+
+          const students = data.recentStudents || []
+          const studentsEl = document.getElementById('recentStudents')
+          if (!students.length) {
+            studentsEl.innerHTML =
+              '<p class="empty-text">No recent students yet.</p>'
+          } else {
+            studentsEl.innerHTML = students
+              .map((student) => {
+                const name = student.name || 'Student'
+                const studentId = student.studentId || 'N/A'
+                const stream = student.majorStream || 'General'
+                const createdAt = formatDate(student.createdAt)
+                return `
+                  <div class="data-row">
+                    <div class="data-main">
+                      <p class="row-title">${escapeHtml(name)}</p>
+                      <p class="row-meta">${escapeHtml(
+                  studentId,
+                )} - ${escapeHtml(stream)} - ${escapeHtml(createdAt)}</p>
+                    </div>
+                  </div>
+                `
+              })
+              .join('')
+          }
+
+          const fieldsEl = document.getElementById('degreeFields')
+          const fields = data.degreesByField || []
+          if (!fields.length) {
+            fieldsEl.innerHTML =
+              '<p class="empty-text">No degree fields available.</p>'
+          } else {
+            fieldsEl.innerHTML = fields
+              .map(
+                (entry) =>
+                  `<span class="tag">${escapeHtml(entry.field)} (${entry.total})</span>`,
+              )
+              .join('')
+          }
+        } catch (error) {
+          document.getElementById('recentEnrollments').innerHTML =
+            `<p class="error-text">${escapeHtml(
+              error.message || 'Error loading summary',
+            )}</p>`
+          document.getElementById('recentStudents').innerHTML =
+            '<p class="error-text">Error loading students.</p>'
+          document.getElementById('degreeFields').innerHTML =
+            '<p class="error-text">Error loading degree fields.</p>'
+        }
       }
 
       function toggleNav() {
