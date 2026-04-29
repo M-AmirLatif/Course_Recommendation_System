@@ -21,6 +21,7 @@
 3. Add the required network access rule for Railway.
 4. Copy the Atlas connection string into `MONGO_URI`.
 5. Seed degree and course data only after the first successful backend connection.
+6. Prefer `npm run seed:degrees` for safe merge mode. Use `npm run seed:degrees:replace` only for an intentional full catalog reset.
 
 ## Frontend on Vercel
 
@@ -39,6 +40,7 @@ window.RUNTIME_CONFIG = {
 ## Production Checklist
 
 - Use a strong `JWT_SECRET` with at least 32 characters.
+- Set `LOG_LEVEL=info` in production unless you are actively debugging.
 - Verify `/health` returns `database: connected`.
 - Confirm `CORS_ORIGINS` matches your real frontend domains.
 - Verify student registration, login, profile loading, and degree recommendations.

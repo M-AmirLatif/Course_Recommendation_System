@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const logger = require('../utils/logger')
 
 const notFound = (req, res, next) => {
   const error = new Error(`Route ${req.originalUrl} not found`)
@@ -35,6 +36,15 @@ const errorHandler = (err, req, res, next) => {
   res.status(statusCode).json({
     message,
     ...(process.env.NODE_ENV !== 'production' ? { stack: err.stack } : {}),
+  })
+
+  logger.error('Request failed', {
+    requestId: req.requestId,
+    method: req.method,
+    path: req.originalUrl,
+    statusCode,
+    error: err.message,
+    stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined,
   })
 }
 

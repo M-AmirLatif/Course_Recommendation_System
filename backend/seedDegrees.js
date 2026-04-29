@@ -6,6 +6,7 @@ const dotenv = require('dotenv')
 dotenv.config()
 
 const Degree = require('./models/Degree')
+const logger = require('./utils/logger')
 
 const degrees = [
   {
@@ -758,22 +759,43 @@ const degrees = [
   },
 ]
 
+const seedMode = String(process.env.SEED_MODE || 'merge').toLowerCase()
+
 const seedDegrees = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI)
-    console.log('Connected to MongoDB')
+    logger.info('Seed degrees connected to MongoDB', { seedMode })
 
-    await Degree.deleteMany({})
-    console.log('Cleared existing degrees')
+    if (seedMode === 'replace') {
+      await Degree.deleteMany({})
+      logger.warn('Seed replace mode cleared existing degrees')
+      await Degree.insertMany(degrees)
+      logger.info('Seeded degrees in replace mode', { count: degrees.length })
+      return
+    }
 
-    await Degree.insertMany(degrees)
-    console.log(`✅ Seeded ${degrees.length} degrees successfully!`)
-
-    mongoose.connection.close()
+    let upserted = 0
+    for (const degree of degrees) {
+      await Degree.updateOne(
+        { shortName: degree.shortName || degree.name },
+        { $set: degree },
+        { upsert: true },
+      )
+      upserted += 1
+    }
+    logger.info('Seeded degrees in merge mode', { count: upserted })
   } catch (error) {
-    console.error('Seed error:', error)
+    logger.error('Seed degrees failed', {
+      error: error.message,
+      stack: error.stack,
+      seedMode,
+    })
     process.exit(1)
+  } finally {
+    await mongoose.connection.close()
   }
 }
 
 seedDegrees()
+
+

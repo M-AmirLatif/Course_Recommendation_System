@@ -7,6 +7,7 @@ dotenv.config()
 
 const Degree = require('./models/Degree')
 const Course = require('./models/Course')
+const logger = require('./utils/logger')
 
 const makeCourse = (
   courseCode,
@@ -287,7 +288,7 @@ const COURSE_CATALOG = {
 const seedCourses = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI)
-    console.log('Connected to MongoDB')
+    logger.info('Seed courses connected to MongoDB')
 
     const degreeShortNames = Object.keys(COURSE_CATALOG)
     const degrees = await Degree.find({ shortName: { $in: degreeShortNames } })
@@ -301,7 +302,7 @@ const seedCourses = async () => {
     for (const shortName of degreeShortNames) {
       const degree = degreeByShort.get(shortName)
       if (!degree) {
-        console.warn(`Degree not found for ${shortName}. Skipping courses.`)
+        logger.warn('Degree not found while seeding courses', { shortName })
         skipped += COURSE_CATALOG[shortName].length
         continue
       }
@@ -317,14 +318,18 @@ const seedCourses = async () => {
       }
     }
 
-    console.log(
-      `Seeded/updated ${upserted} courses. Skipped ${skipped} (missing degrees).`,
-    )
-    mongoose.connection.close()
+    logger.info('Seeded courses', { upserted, skipped })
   } catch (error) {
-    console.error('Seed error:', error)
+    logger.error('Seed courses failed', {
+      error: error.message,
+      stack: error.stack,
+    })
     process.exit(1)
+  } finally {
+    await mongoose.connection.close()
   }
 }
 
 seedCourses()
+
+

@@ -5,16 +5,23 @@ dotenv.config()
 const connectDB = require('./config/db')
 const { validateEnv } = require('./config/env')
 const app = require('./app')
+const logger = require('./utils/logger')
 
 const startServer = async () => {
   try {
     const config = validateEnv()
     await connectDB()
     app.listen(config.port, () => {
-      console.log(`Server running on port ${config.port}`)
+      logger.info('Server started', {
+        port: config.port,
+        environment: config.nodeEnv,
+      })
     })
   } catch (error) {
-    console.error(`Startup error: ${error.message}`)
+    logger.error('Startup error', {
+      error: error.message,
+      stack: error.stack,
+    })
     process.exit(1)
   }
 }

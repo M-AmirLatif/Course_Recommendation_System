@@ -7,7 +7,9 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "seed:degrees": "node seedDegrees.js",
+    "seed:degrees:replace": "cross-env SEED_MODE=replace node seedDegrees.js",
     "seed:courses": "node seedCourses.js",
+    "seed:catalog": "npm run seed:degrees && npm run seed:courses",
     "check": "node --check server.js && node --check app.js",
     "test": "jest --runInBand",
     "test:ci": "jest --runInBand --coverage"
@@ -32,6 +34,7 @@
     "mongoose": "^9.2.2"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "jest": "^30.3.0",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2"

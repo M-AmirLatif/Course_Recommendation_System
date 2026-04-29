@@ -23,6 +23,7 @@ describe('app health routes', () => {
     const response = await request(app).get('/health')
 
     expect(response.status).toBe(200)
+    expect(response.headers['x-request-id']).toEqual(expect.any(String))
     expect(response.body).toEqual(
       expect.objectContaining({
         status: expect.any(String),

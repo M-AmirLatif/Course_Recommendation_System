@@ -50,6 +50,7 @@ JWT_EXPIRES_IN=7d
 CORS_ORIGINS=http://localhost:5500
 API_RATE_LIMIT_MAX=300
 AUTH_RATE_LIMIT_MAX=20
+LOG_LEVEL=info
 ```
 
 ### Run
@@ -67,6 +68,9 @@ npm run dev
 npm run seed:degrees
 npm run seed:courses
 
+# Replace existing degree catalog only when you explicitly want a full reset
+npm run seed:degrees:replace
+
 # Open frontend from the repo root
 npm run frontend
 ```
@@ -83,6 +87,12 @@ npm run check
 npm test
 npm audit --omit=dev
 ```
+
+## Production Notes
+
+- Backend now emits structured JSON logs with request IDs for request and error tracing.
+- `npm run seed:degrees` is safe-by-default and merges sample degrees with existing records.
+- Only `npm run seed:degrees:replace` clears existing degrees before reseeding.
 
 ## Deployment Targets
 

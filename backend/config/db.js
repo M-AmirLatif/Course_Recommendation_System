@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const logger = require('../utils/logger')
 
 let connectionPromise
 
@@ -19,7 +20,9 @@ const connectDB = async () => {
         serverSelectionTimeoutMS: 10000,
       })
       .then((conn) => {
-        console.log(`MongoDB connected: ${conn.connection.host}`)
+        logger.info('MongoDB connected', {
+          host: conn.connection.host,
+        })
         return conn.connection
       })
       .catch((error) => {
