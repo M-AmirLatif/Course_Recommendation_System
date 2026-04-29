@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -419,6 +420,7 @@
           if (!res.ok) {
             errorAlert.style.display = 'block'
             errorAlert.textContent = data.message || 'Unable to save course.'
+            showAppAlert(data.message || 'Unable to save course.', 'error')
             return
           }
 
@@ -426,12 +428,19 @@
           successAlert.textContent = editingCourseId
             ? 'Course updated successfully.'
             : 'Course added successfully.'
+          showAppAlert(
+            editingCourseId
+              ? data.message || 'Course updated successfully.'
+              : data.message || 'Course added successfully.',
+            'success',
+          )
 
           resetForm()
           loadCourses()
         } catch (error) {
           errorAlert.style.display = 'block'
           errorAlert.textContent = 'Server error.'
+          showAppAlert('Server error.', 'error')
         }
       }
 
@@ -475,8 +484,13 @@
           method: 'DELETE',
           headers,
         })
-
-        if (res.ok) loadCourses()
+        const data = await res.json()
+        if (!res.ok) {
+          showAppAlert(data.message || 'Unable to delete course.', 'error')
+          return
+        }
+        showAppAlert(data.message || 'Course deleted successfully.', 'success')
+        loadCourses()
       }
 
       function resetForm() {
@@ -516,7 +530,12 @@
 
       function logout() {
         localStorage.removeItem('token')
-        window.location.href = 'login.html'
+        localStorage.removeItem('studentName')
+        localStorage.removeItem('studentId')
+        showAppAlert('Logged out successfully.', 'success')
+        setTimeout(() => {
+          window.location.href = 'login.html'
+        }, 500)
       }
     </script>
   </body>

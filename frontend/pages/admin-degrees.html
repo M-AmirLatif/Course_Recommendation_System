@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
     <style>
       .degree-admin-layout {
         display: grid;
@@ -820,17 +821,25 @@
           if (!res.ok) {
             errorAlert.style.display = 'block'
             errorAlert.textContent = data.message || 'Unable to save degree.'
+            showAppAlert(data.message || 'Unable to save degree.', 'error')
             return
           }
           successAlert.style.display = 'block'
           successAlert.textContent = editingDegreeId
             ? 'Degree updated successfully.'
             : 'Degree added successfully.'
+          showAppAlert(
+            editingDegreeId
+              ? data.message || 'Degree updated successfully.'
+              : data.message || 'Degree added successfully.',
+            'success',
+          )
           resetForm()
           loadDegrees()
         } catch (error) {
           errorAlert.style.display = 'block'
           errorAlert.textContent = 'Server error.'
+          showAppAlert('Server error.', 'error')
         }
       }
 
@@ -883,7 +892,13 @@
           method: 'DELETE',
           headers,
         })
-        if (res.ok) loadDegrees()
+        const data = await res.json()
+        if (!res.ok) {
+          showAppAlert(data.message || 'Unable to delete degree.', 'error')
+          return
+        }
+        showAppAlert(data.message || 'Degree deleted successfully.', 'success')
+        loadDegrees()
       }
 
       function resetForm() {
@@ -934,7 +949,10 @@
         localStorage.removeItem('token')
         localStorage.removeItem('studentName')
         localStorage.removeItem('studentId')
-        window.location.href = 'login.html'
+        showAppAlert('Logged out successfully.', 'success')
+        setTimeout(() => {
+          window.location.href = 'login.html'
+        }, 500)
       }
     </script>
   </body>

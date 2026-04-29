@@ -228,7 +228,10 @@
         localStorage.removeItem('token')
         localStorage.removeItem('studentName')
         localStorage.removeItem('studentId')
-        window.location.href = 'login.html'
+        showAppAlert('Logged out successfully.', 'success')
+        setTimeout(() => {
+          window.location.href = 'login.html'
+        }, 500)
       }
     </script>
   </body>
