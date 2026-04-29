@@ -6,12 +6,14 @@ const {
   getAdminSummary,
   getAllStudents,
   getAllDegreeEnrollments,
+  getAuditLogs,
   updateDegreeEnrollmentStatus,
   deleteStudent,
 } = require('../controllers/adminController')
 
 router.get('/summary', protect, isAdmin, getAdminSummary)
 router.get('/students', protect, isAdmin, getAllStudents)
+router.get('/audit-logs', protect, isAdmin, getAuditLogs)
 router.get('/degree-enrollments', protect, isAdmin, getAllDegreeEnrollments)
 router.patch(
   '/degree-enrollments/:id',

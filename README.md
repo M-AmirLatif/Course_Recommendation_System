@@ -8,7 +8,7 @@ A full-stack academic guidance platform that helps students identify the most su
 
 ## Core Features
 
-- JWT-based student authentication
+- Cookie-backed JWT authentication with httpOnly session cookies
 - Degree recommendation engine with weighted scoring
 - Degree-specific course pathway suggestions
 - Degree enrollment with duplicate prevention and restore flow
@@ -21,7 +21,7 @@ A full-stack academic guidance platform that helps students identify the most su
 - **Frontend:** HTML, CSS, JavaScript
 - **Backend:** Node.js, Express.js
 - **Database:** MongoDB
-- **Authentication:** JWT + bcryptjs
+- **Authentication:** JWT + bcryptjs + httpOnly cookies
 - **Deployment Targets:** Vercel, Railway, MongoDB Atlas
 
 ## Local Setup
@@ -51,6 +51,7 @@ CORS_ORIGINS=http://localhost:5500
 API_RATE_LIMIT_MAX=300
 AUTH_RATE_LIMIT_MAX=20
 LOG_LEVEL=info
+ALERT_WEBHOOK_URL=
 ```
 
 ### Run
@@ -86,14 +87,23 @@ cd backend
 npm run check
 npm test
 npm audit --omit=dev
+
+# From the repo root
+npm run check:frontend
+npm run test:frontend
+npm run test:e2e
 ```
 
 ## Production Notes
 
 - Backend now emits structured JSON logs with request IDs for request and error tracing.
+- Backend now supports cookie-based auth across the Vercel + Railway deployment flow.
 - `npm run seed:degrees` is safe-by-default and merges sample degrees with existing records.
 - Only `npm run seed:degrees:replace` clears existing degrees before reseeding.
 - Admin and student actions now use consistent success/error toast notifications across the live UI.
+- Admin actions and auth events are stored in audit logs available at `/api/admin/audit-logs`.
+- `ALERT_WEBHOOK_URL` can be set to forward startup, database, and 5xx alerts to an external monitoring webhook.
+- Frontend automated tests run with `npm run test:frontend`, and deployment smoke coverage can be pointed at a live API with `E2E_API_URL`.
 
 ## Deployment Targets
 

@@ -8,6 +8,7 @@
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
     <style>
       .enrollment-toolbar {
         display: flex;
@@ -80,6 +81,7 @@
         <a href="admin-courses.html">Manage Courses</a>
         <a href="admin-students.html">Students</a>
         <a href="admin-enrollments.html">Enrollments</a>
+        <a href="admin-audit-logs.html">Audit Logs</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -109,16 +111,13 @@
     </div>
 
     <script>
-      const API = window.APP_CONFIG.API_BASE_URL
-      const token = localStorage.getItem('token')
-      if (!token) window.location.href = 'login.html'
+      const { apiFetch, logout, requireAdmin } = window.AUTH_CLIENT
 
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+      window.onload = async () => {
+        const profile = await requireAdmin()
+        if (!profile) return
+        await loadEnrollments()
       }
-
-      window.onload = () => loadEnrollments()
 
       function formatDate(dateString) {
         if (!dateString) return '-'
@@ -136,12 +135,9 @@
         const target = document.getElementById('enrollmentList')
         target.innerHTML = '<p class="empty-text">Loading enrollments...</p>'
         try {
-          const res = await fetch(
-            `${API}/admin/degree-enrollments?status=${encodeURIComponent(status)}`,
-            { headers },
+          const data = await apiFetch(
+            `/admin/degree-enrollments?status=${encodeURIComponent(status)}`,
           )
-          const data = await res.json()
-          if (!res.ok) throw new Error(data.message || 'Unable to load')
 
           const list = Array.isArray(data) ? data : []
           document.getElementById('enrollmentCount').textContent = `${
@@ -195,16 +191,10 @@
 
       async function updateEnrollment(id, status) {
         if (!confirm('Update this enrollment?')) return
-        const res = await fetch(`${API}/admin/degree-enrollments/${id}`, {
+        const data = await apiFetch(`/admin/degree-enrollments/${id}`, {
           method: 'PATCH',
-          headers,
-          body: JSON.stringify({ status }),
+          body: { status },
         })
-        const data = await res.json()
-        if (!res.ok) {
-          showAppAlert(data.message || 'Unable to update enrollment', 'error')
-          return
-        }
         showAppAlert(data.message || 'Enrollment updated successfully.', 'success')
         loadEnrollments()
       }
@@ -224,15 +214,6 @@
         }
       })
 
-      function logout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('studentName')
-        localStorage.removeItem('studentId')
-        showAppAlert('Logged out successfully.', 'success')
-        setTimeout(() => {
-          window.location.href = 'login.html'
-        }, 500)
-      }
     </script>
   </body>
 </html>

@@ -5,6 +5,7 @@ const protect = require('../middleware/authMiddleware')
 const isAdmin = require('../middleware/adminMiddleware')
 const { validateDegree } = require('../middleware/validateMiddleware')
 const asyncHandler = require('../middleware/asyncHandler')
+const { recordAuditEvent } = require('../utils/auditLogger')
 
 router.get(
   '/',
@@ -38,6 +39,16 @@ router.post(
   asyncHandler(async (req, res) => {
     const degree = new Degree(req.body)
     const saved = await degree.save()
+    await recordAuditEvent(req, {
+      action: 'admin.degree.created',
+      entityType: 'Degree',
+      entityId: saved._id,
+      metadata: {
+        name: saved.name,
+        shortName: saved.shortName,
+        field: saved.field,
+      },
+    })
     res.status(201).json(saved)
   }),
 )
@@ -53,6 +64,17 @@ router.put(
       runValidators: true,
     })
     if (!degree) return res.status(404).json({ message: 'Degree not found' })
+    await recordAuditEvent(req, {
+      action: 'admin.degree.updated',
+      entityType: 'Degree',
+      entityId: degree._id,
+      metadata: {
+        name: degree.name,
+        shortName: degree.shortName,
+        field: degree.field,
+        isActive: degree.isActive,
+      },
+    })
     res.json(degree)
   }),
 )
@@ -68,6 +90,15 @@ router.delete(
       { new: true },
     )
     if (!degree) return res.status(404).json({ message: 'Degree not found' })
+    await recordAuditEvent(req, {
+      action: 'admin.degree.deactivated',
+      entityType: 'Degree',
+      entityId: degree._id,
+      metadata: {
+        name: degree.name,
+        shortName: degree.shortName,
+      },
+    })
     res.json({ message: 'Degree deactivated', degree })
   }),
 )

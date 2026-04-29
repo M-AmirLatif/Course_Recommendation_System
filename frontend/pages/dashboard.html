@@ -8,6 +8,7 @@
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -190,31 +191,21 @@
     </div>
 
     <script>
-      const API = window.APP_CONFIG.API_BASE_URL
-      const token = localStorage.getItem('token')
-
-      if (!token) {
-        window.location.href = 'login.html'
-      }
-
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      }
+      const { apiFetch, requireAuth, logout } = window.AUTH_CLIENT
 
       window.onload = async () => {
         document.getElementById('welcomeMsg').textContent =
           'Loading your dashboard...'
-        await loadProfile()
+        const profile = await requireAuth()
+        if (!profile) return
+
+        await loadProfile(profile)
         await loadDegreeEnrollments()
         await loadDegreeCount()
         await loadRecommendationCount()
       }
 
-      async function loadProfile() {
-        const res = await fetch(`${API}/auth/profile`, { headers })
-        const data = await res.json()
-
+      async function loadProfile(data) {
         document.getElementById('welcomeMsg').textContent =
           `Welcome back, ${data.name}`
         document.getElementById('navName').textContent = data.name
@@ -238,16 +229,14 @@
       }
 
       async function loadDegreeCount() {
-        const res = await fetch(`${API}/degrees`, { headers })
-        const data = await res.json()
+        const data = await apiFetch('/degrees')
         document.getElementById('totalCourses').textContent = Array.isArray(data)
           ? data.length
           : 0
       }
 
       async function loadDegreeEnrollments() {
-        const res = await fetch(`${API}/degree-enrollments`, { headers })
-        const data = await res.json()
+        const data = await apiFetch('/degree-enrollments')
         const enrollments = Array.isArray(data.enrollments) ? data.enrollments : []
 
         document.getElementById('enrolledCourses').textContent =
@@ -289,15 +278,9 @@
       }
 
       async function unenrollDegree(degreeId) {
-        const res = await fetch(`${API}/degree-enrollments/${degreeId}`, {
+        const data = await apiFetch(`/degree-enrollments/${degreeId}`, {
           method: 'DELETE',
-          headers,
         })
-        const data = await res.json()
-        if (!res.ok) {
-          showAppAlert(data.message || 'Could not unenroll', 'error')
-          return
-        }
         await loadDegreeEnrollments()
         await loadRecommendationCount()
         showAppAlert(
@@ -308,8 +291,7 @@
 
       async function loadRecommendationCount() {
         try {
-          const res = await fetch(`${API}/recommendations`, { headers })
-          const data = await res.json()
+          const data = await apiFetch('/recommendations')
           document.getElementById('recommendations').textContent = Array.isArray(
             data.recommendations,
           )
@@ -335,16 +317,6 @@
           btn.classList.remove('open')
         }
       })
-
-      function logout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('studentName')
-        localStorage.removeItem('studentId')
-        showAppAlert('Logged out successfully.', 'success')
-        setTimeout(() => {
-          window.location.href = 'login.html'
-        }, 500)
-      }
     </script>
   </body>
 </html>

@@ -97,4 +97,24 @@ describe('auth middleware', () => {
     expect(next).toHaveBeenCalledTimes(1)
     expect(res.status).not.toHaveBeenCalled()
   })
+
+  test('accepts token from auth cookie', async () => {
+    const req = {
+      headers: { cookie: 'drs_token=valid-cookie-token' },
+    }
+    const res = createResponse()
+    const next = jest.fn()
+    const student = { _id: 'student-id', role: 'student' }
+
+    jwt.verify.mockReturnValue({ id: 'student-id' })
+    Student.findById.mockReturnValue({
+      select: jest.fn().mockResolvedValue(student),
+    })
+
+    await protect(req, res, next)
+
+    expect(req.student).toEqual(student)
+    expect(next).toHaveBeenCalledTimes(1)
+    expect(res.status).not.toHaveBeenCalled()
+  })
 })

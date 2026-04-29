@@ -33,7 +33,7 @@ Base URL: `http://localhost:5000/api`
 }
 ```
 
-**Response:** student object plus JWT token
+**Response:** student object plus JWT token, and sets the `drs_token` httpOnly auth cookie
 
 ### Login
 
@@ -48,13 +48,19 @@ Base URL: `http://localhost:5000/api`
 }
 ```
 
-**Response:** student object plus JWT token
+**Response:** student object plus JWT token, and sets the `drs_token` httpOnly auth cookie
+
+### Logout
+
+`POST /auth/logout`
+
+**Response:** clears the auth cookie and returns a success message
 
 ### Get Profile
 
 `GET /auth/profile`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 **Response:** authenticated student profile
 
@@ -66,31 +72,31 @@ Base URL: `http://localhost:5000/api`
 
 `GET /degrees`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 ### Get Degree By Id
 
 `GET /degrees/:id`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 ### Create Degree
 
 `POST /degrees`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 ### Update Degree
 
 `PUT /degrees/:id`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 ### Deactivate Degree
 
 `DELETE /degrees/:id`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 **Note:** delete is implemented as deactivation through `isActive: false`.
 
@@ -102,19 +108,19 @@ Base URL: `http://localhost:5000/api`
 
 `GET /courses`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 ### Get Course By Id
 
 `GET /courses/:id`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 ### Create Course
 
 `POST /courses`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 **Required fields:**
 
@@ -129,13 +135,13 @@ Base URL: `http://localhost:5000/api`
 
 `PUT /courses/:id`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 ### Delete Course
 
 `DELETE /courses/:id`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 ---
 
@@ -145,7 +151,7 @@ Base URL: `http://localhost:5000/api`
 
 `GET /recommendations`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 **Response shape:**
 
@@ -188,25 +194,25 @@ Base URL: `http://localhost:5000/api`
 
 `POST /preferences`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 ### Get Preference Profile
 
 `GET /preferences`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 ### Update Preference Profile
 
 `PUT /preferences`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 ### Set Degree Feedback
 
 `POST /preferences/degree-feedback`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 **Body:**
 
@@ -227,7 +233,7 @@ Base URL: `http://localhost:5000/api`
 
 `GET /degree-enrollments`
 
-**Headers:** `Authorization: Bearer <token>`
+**Auth:** cookie-based session or `Authorization: Bearer <token>`
 
 ### Enroll In Degree
 
@@ -249,25 +255,39 @@ Base URL: `http://localhost:5000/api`
 
 `GET /admin/summary`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 ### Get All Students
 
 `GET /admin/students`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 ### Get All Degree Enrollments
 
 `GET /admin/degree-enrollments`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
 
 ### Update Degree Enrollment Status
 
 `PATCH /admin/degree-enrollments/:id`
 
-**Headers:** `Authorization: Bearer <admin-token>`
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
+
+### Get Audit Logs
+
+`GET /admin/audit-logs`
+
+**Auth:** cookie-based admin session or `Authorization: Bearer <admin-token>`
+
+**Query parameters:**
+
+- `page`
+- `limit`
+- `status`
+- `action`
+- `entityType`
 
 ### Delete Student
 

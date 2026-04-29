@@ -8,6 +8,7 @@
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -93,6 +94,7 @@
         <a href="admin-courses.html">Manage Courses</a>
         <a href="admin-students.html">Students</a>
         <a href="admin-enrollments.html">Enrollments</a>
+        <a href="admin-audit-logs.html">Audit Logs</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -248,19 +250,15 @@
     </div>
 
     <script>
-      const API = window.APP_CONFIG.API_BASE_URL
-      const token = localStorage.getItem('token')
-      if (!token) window.location.href = 'login.html'
-
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      }
+      const { apiFetch, logout, requireAdmin } = window.AUTH_CLIENT
 
       let editingCourseId = null
       let degreeOptions = []
 
       window.onload = async () => {
+        const profile = await requireAdmin()
+        if (!profile) return
+
         await loadDegrees()
         loadCourses()
       }
@@ -279,8 +277,7 @@
         const select = document.getElementById('degreeId')
         select.innerHTML = '<option value="">Select degree</option>'
         try {
-          const res = await fetch(`${API}/degrees?all=1`, { headers })
-          const degrees = await res.json()
+          const degrees = await apiFetch('/degrees?all=1')
           if (!Array.isArray(degrees)) return
           degreeOptions = degrees
           degrees.forEach((degree) => {
@@ -297,8 +294,7 @@
       }
 
       async function loadCourses() {
-        const res = await fetch(`${API}/courses?all=1`, { headers })
-        const courses = await res.json()
+        const courses = await apiFetch('/courses?all=1')
 
         const list = document.getElementById('coursesList')
         if (!Array.isArray(courses) || courses.length === 0) {
@@ -400,28 +396,17 @@
         }
 
         try {
-          let res
+          let data
           if (editingCourseId) {
-            res = await fetch(`${API}/courses/${editingCourseId}`, {
+            data = await apiFetch(`/courses/${editingCourseId}`, {
               method: 'PUT',
-              headers,
-              body: JSON.stringify(courseData),
+              body: courseData,
             })
           } else {
-            res = await fetch(`${API}/courses`, {
+            data = await apiFetch('/courses', {
               method: 'POST',
-              headers,
-              body: JSON.stringify(courseData),
+              body: courseData,
             })
-          }
-
-          const data = await res.json()
-
-          if (!res.ok) {
-            errorAlert.style.display = 'block'
-            errorAlert.textContent = data.message || 'Unable to save course.'
-            showAppAlert(data.message || 'Unable to save course.', 'error')
-            return
           }
 
           successAlert.style.display = 'block'
@@ -445,8 +430,7 @@
       }
 
       async function editCourse(id) {
-        const res = await fetch(`${API}/courses/${id}`, { headers })
-        const course = await res.json()
+        const course = await apiFetch(`/courses/${id}`)
 
         document.getElementById('courseCode').value = course.courseCode
         document.getElementById('title').value = course.title
@@ -480,15 +464,9 @@
       async function deleteCourse(id) {
         if (!confirm('Are you sure you want to delete this course?')) return
 
-        const res = await fetch(`${API}/courses/${id}`, {
+        const data = await apiFetch(`/courses/${id}`, {
           method: 'DELETE',
-          headers,
         })
-        const data = await res.json()
-        if (!res.ok) {
-          showAppAlert(data.message || 'Unable to delete course.', 'error')
-          return
-        }
         showAppAlert(data.message || 'Course deleted successfully.', 'success')
         loadCourses()
       }
@@ -528,15 +506,6 @@
         }
       })
 
-      function logout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('studentName')
-        localStorage.removeItem('studentId')
-        showAppAlert('Logged out successfully.', 'success')
-        setTimeout(() => {
-          window.location.href = 'login.html'
-        }, 500)
-      }
     </script>
   </body>
 </html>

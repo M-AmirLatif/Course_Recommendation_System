@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const logger = require('../utils/logger')
+const { notifyAlert } = require('../utils/monitoring')
 
 let connectionPromise
 
@@ -27,6 +28,9 @@ const connectDB = async () => {
       })
       .catch((error) => {
         connectionPromise = null
+        notifyAlert('backend.database_connection_failed', {
+          error: error.message,
+        })
         throw error
       })
   }

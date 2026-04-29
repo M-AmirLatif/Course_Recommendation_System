@@ -1,7 +1,10 @@
 {
   "scripts": {
     "frontend": "node tools/static-server.js",
-    "frontend:dev": "node tools/static-server.js"
+    "frontend:dev": "node tools/static-server.js",
+    "check:frontend": "node --check frontend/js/config.js && node --check frontend/js/auth.js && node --check frontend/js/notifications.js",
+    "test:frontend": "node tests/frontend/run.js",
+    "test:e2e": "node tests/e2e/run.mjs"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

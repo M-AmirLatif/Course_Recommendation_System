@@ -2,6 +2,11 @@ const Student = require('../models/Student')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const asyncHandler = require('../middleware/asyncHandler')
+const { recordAuditEvent } = require('../utils/auditLogger')
+const {
+  clearAuthCookie,
+  setAuthCookie,
+} = require('../utils/authCookies')
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -98,6 +103,18 @@ const registerStudent = asyncHandler(async (req, res) => {
     })
 
     if (student) {
+      const token = generateToken(student._id)
+      setAuthCookie(res, token)
+      await recordAuditEvent(req, {
+        action: 'auth.registered',
+        entityType: 'Student',
+        entityId: student._id,
+        metadata: {
+          role: student.role,
+          email: student.email,
+        },
+      })
+
       res.status(201).json({
         _id: student._id,
         name: student.name,
@@ -106,7 +123,7 @@ const registerStudent = asyncHandler(async (req, res) => {
         department: student.department,
         semester: student.semester,
         role: student.role,
-        token: generateToken(student._id),
+        token,
       })
     }
 })
@@ -134,6 +151,20 @@ const loginStudent = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' })
     }
 
+    const token = generateToken(student._id)
+    setAuthCookie(res, token)
+    req.student = student
+
+    await recordAuditEvent(req, {
+      action: 'auth.logged_in',
+      entityType: 'Session',
+      entityId: student._id,
+      metadata: {
+        role: student.role,
+        email: student.email,
+      },
+    })
+
     res.json({
       _id: student._id,
       name: student.name,
@@ -142,8 +173,20 @@ const loginStudent = asyncHandler(async (req, res) => {
       department: student.department,
       semester: student.semester,
       role: student.role,
-      token: generateToken(student._id),
+      token,
     })
+})
+
+const logoutStudent = asyncHandler(async (req, res) => {
+  await recordAuditEvent(req, {
+    action: 'auth.logged_out',
+    entityType: 'Session',
+    entityId: req.student?._id || '',
+  })
+
+  clearAuthCookie(res)
+
+  res.json({ message: 'Logged out successfully' })
 })
 
 // ─────────────────────────────────────────
@@ -175,12 +218,22 @@ const makeAdmin = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: 'Student not found' })
     }
 
+    await recordAuditEvent(req, {
+      action: 'admin.user.role_updated',
+      entityType: 'Student',
+      entityId: student._id,
+      metadata: {
+        role: student.role,
+      },
+    })
+
     res.json({ message: 'User updated to admin', role: student.role })
 })
 
 module.exports = {
   registerStudent,
   loginStudent,
+  logoutStudent,
   getProfile,
   makeAdmin,
 }

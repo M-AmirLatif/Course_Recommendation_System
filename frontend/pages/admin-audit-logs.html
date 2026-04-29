@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audit Logs - Degree Recommender</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <script src="../js/runtime-config.js"></script>
+    <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
+  </head>
+  <body class="page-admin page-admin-audit">
+    <div class="navbar">
+      <span class="logo">Admin Panel</span>
+      <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="admin-dashboard.html">Overview</a>
+        <a href="admin-degrees.html">Manage Degrees</a>
+        <a href="admin-courses.html">Manage Courses</a>
+        <a href="admin-students.html">Students</a>
+        <a href="admin-enrollments.html">Enrollments</a>
+        <a href="admin-audit-logs.html">Audit Logs</a>
+        <a href="#" class="btn-logout" onclick="logout()">Logout</a>
+      </div>
+    </div>
+
+    <div class="dashboard content-stack">
+      <div class="page-header">
+        <h1>Audit Logs</h1>
+        <p class="subtitle">Track sensitive auth and admin actions.</p>
+      </div>
+
+      <section class="glass-panel">
+        <div class="form-grid form-grid-3">
+          <div class="form-group">
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter" onchange="loadAuditLogs()">
+              <option value="">All</option>
+              <option value="success">Success</option>
+              <option value="failure">Failure</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="entityFilter">Entity Type</label>
+            <input
+              id="entityFilter"
+              type="text"
+              placeholder="Course, Degree, Student"
+              oninput="debouncedReload()"
+            />
+          </div>
+          <div class="form-group">
+            <label for="actionFilter">Action</label>
+            <input
+              id="actionFilter"
+              type="text"
+              placeholder="admin.course.updated"
+              oninput="debouncedReload()"
+            />
+          </div>
+        </div>
+        <div id="auditMeta" class="row-meta">Loading audit logs...</div>
+      </section>
+
+      <section class="glass-panel">
+        <div id="auditList">
+          <p class="empty-text">Loading audit logs...</p>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const { apiFetch, logout, requireAdmin } = window.AUTH_CLIENT
+      let reloadTimer = null
+
+      window.onload = async () => {
+        const profile = await requireAdmin()
+        if (!profile) return
+        await loadAuditLogs()
+      }
+
+      function toggleNav() {
+        const nav = document.getElementById('navLinks')
+        const btn = document.querySelector('.nav-toggle')
+        nav.classList.toggle('open')
+        btn.classList.toggle('open')
+      }
+
+      document.addEventListener('click', function (e) {
+        const nav = document.getElementById('navLinks')
+        const btn = document.querySelector('.nav-toggle')
+        if (nav && btn && !nav.contains(e.target) && !btn.contains(e.target)) {
+          nav.classList.remove('open')
+          btn.classList.remove('open')
+        }
+      })
+
+      function debouncedReload() {
+        clearTimeout(reloadTimer)
+        reloadTimer = setTimeout(() => {
+          loadAuditLogs()
+        }, 250)
+      }
+
+      function escapeHtml(value) {
+        if (value === null || value === undefined) return ''
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;')
+      }
+
+      function formatTimestamp(value) {
+        if (!value) return '-'
+        return new Date(value).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      }
+
+      async function loadAuditLogs() {
+        const params = new URLSearchParams()
+        const status = document.getElementById('statusFilter').value.trim()
+        const entityType = document.getElementById('entityFilter').value.trim()
+        const action = document.getElementById('actionFilter').value.trim()
+
+        if (status) params.set('status', status)
+        if (entityType) params.set('entityType', entityType)
+        if (action) params.set('action', action)
+        params.set('limit', '100')
+
+        const list = document.getElementById('auditList')
+        list.innerHTML = '<p class="empty-text">Loading audit logs...</p>'
+
+        try {
+          const data = await apiFetch(`/admin/audit-logs?${params.toString()}`)
+          const logs = Array.isArray(data.logs) ? data.logs : []
+          document.getElementById('auditMeta').textContent = `${logs.length} log entries loaded`
+
+          if (!logs.length) {
+            list.innerHTML = '<p class="empty-text">No audit logs match these filters.</p>'
+            return
+          }
+
+          list.innerHTML = logs
+            .map((entry) => {
+              const statusClass =
+                entry.status === 'success' ? 'status-enrolled' : 'status-removed'
+              const metadata = entry.metadata
+                ? `<pre class="code-block">${escapeHtml(
+                    JSON.stringify(entry.metadata, null, 2),
+                  )}</pre>`
+                : ''
+
+              return `
+                <div class="data-row">
+                  <div class="data-main">
+                    <p class="row-title">${escapeHtml(entry.action)}</p>
+                    <p class="row-meta">
+                      ${escapeHtml(entry.entityType)} ${escapeHtml(entry.entityId || '')} |
+                      ${escapeHtml(entry.actorName || entry.actorEmail || entry.actorRole)} |
+                      ${escapeHtml(entry.requestId || '')}
+                    </p>
+                    <p class="row-meta">
+                      ${escapeHtml(entry.method || '')} ${escapeHtml(entry.path || '')} |
+                      ${escapeHtml(formatTimestamp(entry.createdAt))}
+                    </p>
+                    ${metadata}
+                  </div>
+                  <div class="row-actions">
+                    <span class="status-badge ${statusClass}">${escapeHtml(
+                      entry.status || 'success',
+                    )}</span>
+                  </div>
+                </div>
+              `
+            })
+            .join('')
+        } catch (error) {
+          list.innerHTML = `<p class="error-text">${escapeHtml(
+            error.data?.message || error.message || 'Failed to load audit logs.',
+          )}</p>`
+        }
+      }
+    </script>
+  </body>
+</html>

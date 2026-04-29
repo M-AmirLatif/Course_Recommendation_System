@@ -8,6 +8,7 @@
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
     <style>
       .degree-admin-layout {
         display: grid;
@@ -243,6 +244,7 @@
         <a href="admin-courses.html">Manage Courses</a>
         <a href="admin-students.html">Students</a>
         <a href="admin-enrollments.html">Enrollments</a>
+        <a href="admin-audit-logs.html">Audit Logs</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -543,22 +545,18 @@
     </div>
 
     <script>
-      const API = window.APP_CONFIG.API_BASE_URL
-      const token = localStorage.getItem('token')
-      if (!token) window.location.href = 'login.html'
-
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      }
+      const { apiFetch, logout, requireAdmin } = window.AUTH_CLIENT
 
       let editingDegreeId = null
 
-      window.onload = () => {
+      window.onload = async () => {
+        const profile = await requireAdmin()
+        if (!profile) return
+
         addUniversityRow()
         attachPreviewListeners()
         syncPreview()
-        loadDegrees()
+        await loadDegrees()
       }
 
       function readCheckboxValues(containerId) {
@@ -728,8 +726,7 @@
       }
 
       async function loadDegrees() {
-        const res = await fetch(`${API}/degrees?all=1`, { headers })
-        const degrees = await res.json()
+        const degrees = await apiFetch('/degrees?all=1')
 
         const list = document.getElementById('degreeList')
         if (!Array.isArray(degrees) || degrees.length === 0) {
@@ -806,24 +803,15 @@
         }
 
         try {
-          const res = editingDegreeId
-            ? await fetch(`${API}/degrees/${editingDegreeId}`, {
+          const data = editingDegreeId
+            ? await apiFetch(`/degrees/${editingDegreeId}`, {
                 method: 'PUT',
-                headers,
-                body: JSON.stringify(payload),
+                body: payload,
               })
-            : await fetch(`${API}/degrees`, {
+            : await apiFetch('/degrees', {
                 method: 'POST',
-                headers,
-                body: JSON.stringify(payload),
+                body: payload,
               })
-          const data = await res.json()
-          if (!res.ok) {
-            errorAlert.style.display = 'block'
-            errorAlert.textContent = data.message || 'Unable to save degree.'
-            showAppAlert(data.message || 'Unable to save degree.', 'error')
-            return
-          }
           successAlert.style.display = 'block'
           successAlert.textContent = editingDegreeId
             ? 'Degree updated successfully.'
@@ -844,8 +832,7 @@
       }
 
       async function editDegree(id) {
-        const res = await fetch(`${API}/degrees/${id}`, { headers })
-        const degree = await res.json()
+        const degree = await apiFetch(`/degrees/${id}`)
 
         document.getElementById('name').value = degree.name || ''
         document.getElementById('shortName').value = degree.shortName || ''
@@ -888,15 +875,9 @@
 
       async function deleteDegree(id) {
         if (!confirm('Are you sure you want to delete this degree?')) return
-        const res = await fetch(`${API}/degrees/${id}`, {
+        const data = await apiFetch(`/degrees/${id}`, {
           method: 'DELETE',
-          headers,
         })
-        const data = await res.json()
-        if (!res.ok) {
-          showAppAlert(data.message || 'Unable to delete degree.', 'error')
-          return
-        }
         showAppAlert(data.message || 'Degree deleted successfully.', 'success')
         loadDegrees()
       }
@@ -945,15 +926,6 @@
         }
       })
 
-      function logout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('studentName')
-        localStorage.removeItem('studentId')
-        showAppAlert('Logged out successfully.', 'success')
-        setTimeout(() => {
-          window.location.href = 'login.html'
-        }, 500)
-      }
     </script>
   </body>
 </html>

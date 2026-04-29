@@ -8,6 +8,7 @@
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
     <style>
       .rec-card {
         background: linear-gradient(
@@ -553,15 +554,7 @@
     </div>
 
     <script>
-      const API = window.APP_CONFIG.API_BASE_URL
-      const token = localStorage.getItem('token')
-      if (!token) window.location.href = 'login.html'
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      }
-      document.getElementById('navName').textContent =
-        localStorage.getItem('studentName') || ''
+      const { apiFetch, requireAuth, logout } = window.AUTH_CLIENT
 
       function toggleNav() {
         document.getElementById('navLinks').classList.toggle('open')
@@ -618,9 +611,7 @@
       }
 
       async function loadFeedbackState() {
-        const res = await fetch(`${API}/preferences`, { headers })
-        if (!res.ok) return
-        const pref = await res.json()
+        const pref = await apiFetch('/preferences')
         state.likedDegrees = new Set((pref.likedDegrees || []).map((id) => String(id)))
         state.dislikedDegrees = new Set(
           (pref.dislikedDegrees || []).map((id) => String(id)),
@@ -628,9 +619,7 @@
       }
 
       async function loadEnrollmentState() {
-        const res = await fetch(`${API}/degree-enrollments`, { headers })
-        if (!res.ok) return
-        const data = await res.json()
+        const data = await apiFetch('/degree-enrollments')
         state.maxEnrollments = data.maxAllowed || 2
         state.enrolledDegreeIds = new Set(
           (data.enrollments || []).map((e) => String(e.degree?._id || e.degree)),
@@ -638,16 +627,10 @@
       }
 
       async function setDegreeFeedback(degreeId, action) {
-        const res = await fetch(`${API}/preferences/degree-feedback`, {
+        const data = await apiFetch('/preferences/degree-feedback', {
           method: 'POST',
-          headers,
-          body: JSON.stringify({ degreeId, action }),
+          body: { degreeId, action },
         })
-        const data = await res.json()
-        if (!res.ok) {
-          showAppAlert(data.message || 'Could not update feedback', 'error')
-          return
-        }
         state.likedDegrees = new Set((data.likedDegrees || []).map((id) => String(id)))
         state.dislikedDegrees = new Set(
           (data.dislikedDegrees || []).map((id) => String(id)),
@@ -662,15 +645,9 @@
       }
 
       async function enrollDegree(degreeId) {
-        const res = await fetch(`${API}/degree-enrollments/${degreeId}`, {
+        const data = await apiFetch(`/degree-enrollments/${degreeId}`, {
           method: 'POST',
-          headers,
         })
-        const data = await res.json()
-        if (!res.ok) {
-          showAppAlert(data.message || 'Could not enroll', 'error')
-          return
-        }
         await loadEnrollmentState()
         await render()
         showAppAlert(
@@ -680,15 +657,9 @@
       }
 
       async function unenrollDegree(degreeId) {
-        const res = await fetch(`${API}/degree-enrollments/${degreeId}`, {
+        const data = await apiFetch(`/degree-enrollments/${degreeId}`, {
           method: 'DELETE',
-          headers,
         })
-        const data = await res.json()
-        if (!res.ok) {
-          showAppAlert(data.message || 'Could not unenroll', 'error')
-          return
-        }
         await loadEnrollmentState()
         await render()
         showAppAlert(
@@ -698,8 +669,7 @@
       }
 
       async function render() {
-        const res = await fetch(`${API}/recommendations`, { headers })
-        const data = await res.json()
+        const data = await apiFetch('/recommendations')
 
         document.getElementById('subtitleMsg').textContent =
           `Personalized degree recommendations for ${data.student}`
@@ -828,6 +798,10 @@
 
       window.onload = async () => {
         try {
+          const profile = await requireAuth()
+          if (!profile) return
+
+          document.getElementById('navName').textContent = profile.name || ''
           await loadFeedbackState()
           await loadEnrollmentState()
           await render()
@@ -835,15 +809,6 @@
           document.getElementById('recommendationsList').innerHTML =
             '<p class="error-text">Error loading recommendations. Please try again.</p>'
         }
-      }
-      function logout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('studentName')
-        localStorage.removeItem('studentId')
-        showAppAlert('Logged out successfully.', 'success')
-        setTimeout(() => {
-          window.location.href = 'login.html'
-        }, 500)
       }
     </script>
   </body>

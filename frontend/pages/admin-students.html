@@ -8,6 +8,7 @@
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -93,6 +94,7 @@
         <a href="admin-courses.html">Manage Courses</a>
         <a href="admin-students.html">Students</a>
         <a href="admin-enrollments.html">Enrollments</a>
+        <a href="admin-audit-logs.html">Audit Logs</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -124,29 +126,19 @@
     </div>
 
     <script>
-      const API = window.APP_CONFIG.API_BASE_URL
-      const token = localStorage.getItem('token')
-      if (!token) window.location.href = 'login.html'
-
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      }
+      const { apiFetch, logout, requireAdmin } = window.AUTH_CLIENT
 
       let allStudents = []
 
-      window.onload = () => loadStudents()
+      window.onload = async () => {
+        const profile = await requireAdmin()
+        if (!profile) return
+        await loadStudents()
+      }
 
       async function loadStudents() {
         try {
-          const res = await fetch(`${API}/admin/students`, { headers })
-          const data = await res.json()
-
-          if (!res.ok) {
-            document.getElementById('studentsList').innerHTML =
-              `<p class="error-text">${data.message}</p>`
-            return
-          }
+          const data = await apiFetch('/admin/students')
 
           allStudents = data
           document.getElementById('studentCount').textContent =
@@ -241,15 +233,9 @@
       async function deleteStudent(id, name) {
         if (!confirm(`Are you sure you want to delete ${name}?`)) return
 
-        const res = await fetch(`${API}/admin/students/${id}`, {
+        const data = await apiFetch(`/admin/students/${id}`, {
           method: 'DELETE',
-          headers,
         })
-        const data = await res.json()
-        if (!res.ok) {
-          showAppAlert(data.message || 'Unable to delete student.', 'error')
-          return
-        }
         showAppAlert(data.message || 'Student deleted successfully.', 'success')
         loadStudents()
       }
@@ -270,15 +256,6 @@
         }
       })
 
-      function logout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('studentName')
-        localStorage.removeItem('studentId')
-        showAppAlert('Logged out successfully.', 'success')
-        setTimeout(() => {
-          window.location.href = 'login.html'
-        }, 500)
-      }
     </script>
   </body>
 </html>

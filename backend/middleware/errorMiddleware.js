@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const logger = require('../utils/logger')
+const { notifyAlert } = require('../utils/monitoring')
 
 const notFound = (req, res, next) => {
   const error = new Error(`Route ${req.originalUrl} not found`)
@@ -46,6 +47,16 @@ const errorHandler = (err, req, res, next) => {
     error: err.message,
     stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined,
   })
+
+  if (statusCode >= 500) {
+    notifyAlert('backend.request_failed', {
+      requestId: req.requestId,
+      method: req.method,
+      path: req.originalUrl,
+      statusCode,
+      error: err.message,
+    })
+  }
 }
 
 module.exports = {

@@ -6,6 +6,7 @@ const connectDB = require('./config/db')
 const { validateEnv } = require('./config/env')
 const app = require('./app')
 const logger = require('./utils/logger')
+const { notifyAlert } = require('./utils/monitoring')
 
 const startServer = async () => {
   try {
@@ -19,6 +20,10 @@ const startServer = async () => {
     })
   } catch (error) {
     logger.error('Startup error', {
+      error: error.message,
+      stack: error.stack,
+    })
+    notifyAlert('backend.startup_failed', {
       error: error.message,
       stack: error.stack,
     })

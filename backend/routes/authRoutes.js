@@ -3,6 +3,7 @@ const router = express.Router()
 const {
   registerStudent,
   loginStudent,
+  logoutStudent,
   getProfile,
   makeAdmin,
 } = require('../controllers/authController')
@@ -17,6 +18,7 @@ const {
 // Public routes
 router.post('/register', validateRegister, registerStudent)
 router.post('/login', validateLogin, loginStudent)
+router.post('/logout', logoutStudent)
 
 // Protected routes
 router.get('/profile', protect, getProfile)

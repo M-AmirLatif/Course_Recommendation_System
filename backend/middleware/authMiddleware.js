@@ -1,15 +1,12 @@
 const jwt = require('jsonwebtoken')
 const Student = require('../models/Student')
+const { getTokenFromRequest } = require('../utils/authCookies')
 
 const protect = async (req, res, next) => {
-  let token
+  const token = getTokenFromRequest(req)
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
+  if (token) {
     try {
-      token = req.headers.authorization.split(' ')[1]
       const decoded = jwt.verify(token, process.env.JWT_SECRET)
       req.student = await Student.findById(decoded.id).select('-password')
       if (!req.student) {
@@ -22,9 +19,7 @@ const protect = async (req, res, next) => {
     }
   }
 
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' })
-  }
+  return res.status(401).json({ message: 'Not authorized, no token' })
 }
 
 module.exports = protect

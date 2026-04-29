@@ -2,7 +2,9 @@ const Student = require('../models/Student')
 const Degree = require('../models/Degree')
 const Preference = require('../models/Preference')
 const DegreeEnrollment = require('../models/DegreeEnrollment')
+const AuditLog = require('../models/AuditLog')
 const asyncHandler = require('../middleware/asyncHandler')
+const { recordAuditEvent } = require('../utils/auditLogger')
 
 const ACTIVE_STATUS_QUERY = {
   $or: [{ status: 'enrolled' }, { status: 'active' }, { status: { $exists: false } }],
@@ -89,6 +91,16 @@ const updateDegreeEnrollmentStatus = asyncHandler(async (req, res) => {
     }
 
     await enrollment.save()
+    await recordAuditEvent(req, {
+      action: 'admin.degree_enrollment.status_updated',
+      entityType: 'DegreeEnrollment',
+      entityId: enrollment._id,
+      metadata: {
+        status,
+        studentId: enrollment.student?._id || enrollment.student,
+        degreeId: enrollment.degree?._id || enrollment.degree,
+      },
+    })
     res.json({ message: 'Degree enrollment updated', enrollment })
 })
 
@@ -155,8 +167,51 @@ const deleteStudent = asyncHandler(async (req, res) => {
       DegreeEnrollment.deleteMany({ student: req.params.id }),
     ])
 
+    await recordAuditEvent(req, {
+      action: 'admin.student.deleted',
+      entityType: 'Student',
+      entityId: req.params.id,
+      metadata: {
+        deletedStudentEmail: student.email,
+        deletedStudentName: student.name,
+        deletedStudentRole: student.role,
+      },
+    })
+
     res.json({
       message: 'Student and related recommendation data deleted successfully',
+    })
+})
+
+const getAuditLogs = asyncHandler(async (req, res) => {
+    const limit = Math.min(Number(req.query.limit) || 50, 200)
+    const page = Math.max(Number(req.query.page) || 1, 1)
+    const skip = (page - 1) * limit
+
+    const filter = {}
+    if (req.query.entityType) {
+      filter.entityType = req.query.entityType
+    }
+    if (req.query.action) {
+      filter.action = req.query.action
+    }
+    if (req.query.status) {
+      filter.status = req.query.status
+    }
+
+    const [logs, total] = await Promise.all([
+      AuditLog.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      AuditLog.countDocuments(filter),
+    ])
+
+    res.json({
+      logs,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(Math.ceil(total / limit), 1),
+      },
     })
 })
 
@@ -165,6 +220,7 @@ module.exports = {
   getAllStudents,
   getAllEnrollments: getAllDegreeEnrollments,
   getAllDegreeEnrollments,
+  getAuditLogs,
   updateDegreeEnrollmentStatus,
   deleteStudent,
 }

@@ -8,6 +8,7 @@
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -93,6 +94,7 @@
         <a href="admin-courses.html">Manage Courses</a>
         <a href="admin-students.html">Students</a>
         <a href="admin-enrollments.html">Enrollments</a>
+        <a href="admin-audit-logs.html">Audit Logs</a>
         <a href="#" class="btn-logout" onclick="logout()">Logout</a>
       </div>
     </div>
@@ -148,6 +150,12 @@
           >
             View Students
           </a>
+          <a
+            href="admin-audit-logs.html"
+            class="action-link action-link-secondary"
+          >
+            View Audit Logs
+          </a>
         </div>
       </section>
 
@@ -174,17 +182,13 @@
     </div>
 
     <script>
-      const API = window.APP_CONFIG.API_BASE_URL
-      const token = localStorage.getItem('token')
+      const { apiFetch, logout, requireAdmin } = window.AUTH_CLIENT
 
-      if (!token) window.location.href = 'login.html'
-
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+      window.onload = async () => {
+        const profile = await requireAdmin()
+        if (!profile) return
+        await loadSummary()
       }
-
-      window.onload = () => loadSummary()
 
       function formatDate(value) {
         if (!value) return '-'
@@ -209,11 +213,7 @@
 
       async function loadSummary() {
         try {
-          const res = await fetch(`${API}/admin/summary`, { headers })
-          const data = await res.json()
-          if (!res.ok) {
-            throw new Error(data.message || 'Unable to load admin summary')
-          }
+          const data = await apiFetch('/admin/summary')
 
           const counts = data.counts || {}
           document.getElementById('totalDegrees').textContent =
@@ -323,15 +323,6 @@
         }
       })
 
-      function logout() {
-        localStorage.removeItem('token')
-        localStorage.removeItem('studentName')
-        localStorage.removeItem('studentId')
-        showAppAlert('Logged out successfully.', 'success')
-        setTimeout(() => {
-          window.location.href = 'login.html'
-        }, 500)
-      }
     </script>
   </body>
 </html>

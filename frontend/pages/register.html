@@ -8,6 +8,7 @@
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
     <script src="../js/notifications.js"></script>
+    <script src="../js/auth.js"></script>
     <style>
       .step-indicator {
         display: flex;
@@ -561,11 +562,9 @@
     </div>
 
     <script>
-      const API = window.APP_CONFIG.API_BASE_URL
+      const { apiFetch, redirectIfAuthenticated } = window.AUTH_CLIENT
 
-      if (localStorage.getItem('token')) {
-        window.location.href = 'dashboard.html'
-      }
+      redirectIfAuthenticated()
 
       // ── State ──────────────────────────────
       const ratings = {
@@ -753,25 +752,10 @@
         }
 
         try {
-          const response = await fetch(`${API}/auth/register`, {
+          await apiFetch('/auth/register', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body: payload,
           })
-
-          const data = await response.json()
-
-          if (!response.ok) {
-            errorAlert.style.display = 'block'
-            errorAlert.textContent = data.message || 'Registration failed.'
-            showAppAlert(data.message || 'Registration failed.', 'error')
-            return
-          }
-
-          localStorage.setItem('token', data.token)
-          localStorage.setItem('studentName', data.name)
-          localStorage.setItem('studentId', data._id)
-          localStorage.setItem('userRole', data.role)
 
           successAlert.style.display = 'block'
           successAlert.textContent =
@@ -786,8 +770,9 @@
           }, 1200)
         } catch (error) {
           errorAlert.style.display = 'block'
-          errorAlert.textContent = 'Server error. Please try again.'
-          showAppAlert('Server error. Please try again.', 'error')
+          errorAlert.textContent =
+            error.data?.message || 'Server error. Please try again.'
+          showAppAlert(errorAlert.textContent, 'error')
         }
       }
 

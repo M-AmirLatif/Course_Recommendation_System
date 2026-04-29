@@ -1,6 +1,7 @@
 const Course = require('../models/Course')
 const Degree = require('../models/Degree')
 const asyncHandler = require('../middleware/asyncHandler')
+const { recordAuditEvent } = require('../utils/auditLogger')
 
 // ─────────────────────────────────────────
 // @route   POST /api/courses
@@ -73,6 +74,17 @@ const createCourse = asyncHandler(async (req, res) => {
       relevantSubjects: normalizedRelevantSubjects,
       skillTags: normalizedSkillTags,
       careerTags: normalizedCareerTags,
+    })
+
+    await recordAuditEvent(req, {
+      action: 'admin.course.created',
+      entityType: 'Course',
+      entityId: course._id,
+      metadata: {
+        courseCode: course.courseCode,
+        title: course.title,
+        degreeId: course.degree,
+      },
     })
 
     res.status(201).json(course)
@@ -156,6 +168,17 @@ const updateCourse = asyncHandler(async (req, res) => {
       returnDocument: 'after',
       runValidators: true,
     })
+    await recordAuditEvent(req, {
+      action: 'admin.course.updated',
+      entityType: 'Course',
+      entityId: updatedCourse._id,
+      metadata: {
+        courseCode: updatedCourse.courseCode,
+        title: updatedCourse.title,
+        degreeId: updatedCourse.degree,
+        isActive: updatedCourse.isActive,
+      },
+    })
     res.json(updatedCourse)
 })
 
@@ -173,6 +196,15 @@ const deleteCourse = asyncHandler(async (req, res) => {
 
     // Soft delete — just set isActive to false
     await Course.findByIdAndUpdate(req.params.id, { isActive: false })
+    await recordAuditEvent(req, {
+      action: 'admin.course.deactivated',
+      entityType: 'Course',
+      entityId: course._id,
+      metadata: {
+        courseCode: course.courseCode,
+        title: course.title,
+      },
+    })
 
     res.json({ message: 'Course deactivated successfully' })
 })
