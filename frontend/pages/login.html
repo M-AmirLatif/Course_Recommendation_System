@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
   </head>
   <body class="page-auth page-login">
     <div class="auth-container">
@@ -74,6 +75,7 @@
           if (!response.ok) {
             errorAlert.style.display = 'block'
             errorAlert.textContent = data.message || 'Login failed.'
+            showAppAlert(data.message || 'Login failed.', 'error')
             return
           }
 
@@ -83,13 +85,16 @@
           localStorage.setItem('userRole', data.role)
 
           if (data.role === 'admin') {
+            showAppAlert('Admin login successful.', 'success')
             window.location.href = 'admin-dashboard.html'
           } else {
+            showAppAlert('Login successful.', 'success')
             window.location.href = 'dashboard.html'
           }
         } catch (error) {
           errorAlert.style.display = 'block'
           errorAlert.textContent = 'Server error. Make sure backend is running.'
+          showAppAlert('Server error. Make sure backend is running.', 'error')
         }
       }
 

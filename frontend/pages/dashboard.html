@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -294,11 +295,15 @@
         })
         const data = await res.json()
         if (!res.ok) {
-          alert(data.message || 'Could not unenroll')
+          showAppAlert(data.message || 'Could not unenroll', 'error')
           return
         }
         await loadDegreeEnrollments()
         await loadRecommendationCount()
+        showAppAlert(
+          data.message || 'Degree unenrolled successfully.',
+          'success',
+        )
       }
 
       async function loadRecommendationCount() {

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
     <style>
       .enrollment-toolbar {
         display: flex;
@@ -201,9 +202,10 @@
         })
         const data = await res.json()
         if (!res.ok) {
-          alert(data.message || 'Unable to update enrollment')
+          showAppAlert(data.message || 'Unable to update enrollment', 'error')
           return
         }
+        showAppAlert(data.message || 'Enrollment updated successfully.', 'success')
         loadEnrollments()
       }
 

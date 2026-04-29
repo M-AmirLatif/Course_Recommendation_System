@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
     <style>
       .step-indicator {
         display: flex;
@@ -763,6 +764,7 @@
           if (!response.ok) {
             errorAlert.style.display = 'block'
             errorAlert.textContent = data.message || 'Registration failed.'
+            showAppAlert(data.message || 'Registration failed.', 'error')
             return
           }
 
@@ -774,6 +776,10 @@
           successAlert.style.display = 'block'
           successAlert.textContent =
             'Account created! Redirecting to your recommendations...'
+          showAppAlert(
+            'Account created successfully. Redirecting to recommendations...',
+            'success',
+          )
 
           setTimeout(() => {
             window.location.href = 'recommendations.html'
@@ -781,6 +787,7 @@
         } catch (error) {
           errorAlert.style.display = 'block'
           errorAlert.textContent = 'Server error. Please try again.'
+          showAppAlert('Server error. Please try again.', 'error')
         }
       }
 
