@@ -93,6 +93,7 @@ npm audit --omit=dev
 - Backend now emits structured JSON logs with request IDs for request and error tracing.
 - `npm run seed:degrees` is safe-by-default and merges sample degrees with existing records.
 - Only `npm run seed:degrees:replace` clears existing degrees before reseeding.
+- Admin and student actions now use consistent success/error toast notifications across the live UI.
 
 ## Deployment Targets
 

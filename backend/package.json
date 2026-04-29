@@ -1,5 +1,5 @@
 {
-  "name": "course-recommender",
+  "name": "degree-recommender",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",

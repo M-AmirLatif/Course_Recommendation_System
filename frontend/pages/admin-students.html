@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/style.css" />
     <script src="../js/runtime-config.js"></script>
     <script src="../js/config.js"></script>
+    <script src="../js/notifications.js"></script>
     <style>
       .nav-toggle {
         display: none;
@@ -244,8 +245,13 @@
           method: 'DELETE',
           headers,
         })
-
-        if (res.ok) loadStudents()
+        const data = await res.json()
+        if (!res.ok) {
+          showAppAlert(data.message || 'Unable to delete student.', 'error')
+          return
+        }
+        showAppAlert(data.message || 'Student deleted successfully.', 'success')
+        loadStudents()
       }
 
       function toggleNav() {
@@ -266,7 +272,12 @@
 
       function logout() {
         localStorage.removeItem('token')
-        window.location.href = 'login.html'
+        localStorage.removeItem('studentName')
+        localStorage.removeItem('studentId')
+        showAppAlert('Logged out successfully.', 'success')
+        setTimeout(() => {
+          window.location.href = 'login.html'
+        }, 500)
       }
     </script>
   </body>
