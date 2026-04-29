@@ -29,7 +29,11 @@ const getPreference = asyncHandler(async (req, res) => {
     })
 
     if (!preference) {
-      return res.status(404).json({ message: 'No preferences found' })
+      return res.json({
+        student: req.student._id,
+        likedDegrees: [],
+        dislikedDegrees: [],
+      })
     }
 
     res.json(preference)
